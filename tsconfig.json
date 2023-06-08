@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"module": "es2022",
+		"target": "esnext",
+		"inlineSourceMap": true,
+		"strict": true,
+		"moduleResolution": "node",
+		"rootDir": "./src/",
+		"outDir": "./out/",
+		"allowSyntheticDefaultImports": true,
+		"useUnknownInCatchVariables": false,
+		"skipLibCheck": true,
+		"noEmitOnError": false
+	},
+	"include": [
+		"./src/**/*.ts"
+	],
+	"exclude": [
+	]
+}
