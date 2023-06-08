@@ -57,7 +57,7 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-const dump = ['coords', 'certain', 'address', 'people', 'contact', 'animals', 'details', 'status', 'tag'] as const;
+const dump = ['coords', 'urgent', 'status', 'certain', 'address', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
 function EntryPopup({ entry }: { entry: Entry }) {
 	return <div>
 		{dump.filter(k => entry[k]).map(k => <div>{k}: {String(entry[k])}</div>)}

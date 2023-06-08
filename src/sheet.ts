@@ -36,22 +36,23 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	
 	const cols = {
 		coords: columns.findIndex(s => s.includes('Координаты')),
-		address: columns.findIndex(s => s.includes('Адрес')),
+		address: columns.findIndex(s => s.includes('адрес')),
 		people: columns.findIndex(s => s.includes('ство человек')),
-		contact: columns.findIndex(s => s.includes('Контакт')),
-		animals: columns.findIndex(s => s.includes('Тварини')),
-		details: columns.findIndex(s => s.includes('Деталі')),
-		status: columns.findIndex(s => s.includes('Статус')),
-		tag: columns.findIndex(s => s.includes('Терміново')),
+		contact: columns.findIndex(s => s.includes('Контактный номер')),
+		contactInfo: columns.findIndex(s => s.includes('Контакт для связи')),
+		animals: columns.findIndex(s => s.includes('ство жив')),
+		details: columns.findIndex(s => s.includes('Другие комм')),
+		status: columns.findIndex(s => s.includes('статус')),
+		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
-	const verbatim = ['address', 'people', 'contact', 'animals', 'details', 'status', 'tag'] as const;
-	
-	const entries = rowData.slice(1).map((row, i) => {
-		const llMatch = row.values![cols.coords].effectiveValue?.stringValue?.match(/\d+\.\d+,\s*\d+\.\d+/);
+	const verbatim = ['address', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
+	// console.log(cols, columns);
+	const entries = rowData.slice(1).filter(row => row.values?.some(cd => !!cd?.effectiveValue?.stringValue)).map((row, i) => {
+		const llMatch = row.values![cols.coords]?.effectiveValue?.stringValue?.match(/\d+\.\d+,\s*\d+\.\d+/);
 		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;
 		const certain = !!coords && row.values![cols.coords].userEnteredValue?.stringValue?.[0] != '=';
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], cd?.effectiveValue?.stringValue]));
-		const etc = Object.fromEntries(verbatim.map(k => [k, row.values![cols[k]].effectiveValue?.stringValue]).filter(r => !!r[1]));
+		const etc = Object.fromEntries(verbatim.map(k => [k, row.values![cols[k]]?.effectiveValue?.stringValue]).filter(r => !!r[1]));
 		return <Entry> {
 			idx: i + 1,
 			coords,

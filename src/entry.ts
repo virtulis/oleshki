@@ -2,12 +2,13 @@ export interface Entry {
 	idx: number;
 	coords?: [number, number];
 	certain: boolean;
-	tag?: string;
+	urgent?: string;
 	status?: string;
 	address?: string;
 	details?: string;
 	people?: string;
 	contact?: string;
+	contactInfo?: string;
 	animals?: string;
 	data: Record<string, string>;
 }
