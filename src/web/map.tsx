@@ -56,7 +56,7 @@ export class MapView extends Component<MapProps, MapState> {
 			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords]);
 			seen.add(key);
 			if (!this.markers.has(key)) {
-				console.log('add', key);
+				// console.log('add', key);
 				this.markers.set(key, L.marker(entry.coords, {
 					interactive: true,
 				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} />)));
@@ -64,7 +64,7 @@ export class MapView extends Component<MapProps, MapState> {
 		}
 		for (const [key, marker] of this.markers.entries()) {
 			if (seen.has(key)) continue;
-			console.log('rm', key);
+			// console.log('rm', key);
 			marker.remove();
 			this.markers.delete(key);
 		}
