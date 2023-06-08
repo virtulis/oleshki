@@ -13,17 +13,16 @@ module.exports = {
 		ecmaVersion: 12,
 		sourceType: 'module',
 		tsconfigRootDir: __dirname,
-		project: ['./tsconfig.json', './config/tsconfig.json', './dev/watch/tsconfig.json'],
+		project: ['./tsconfig.json'],
 	},
 	plugins: [
 		'@typescript-eslint',
 	],
 	ignorePatterns: [
 		'**/*.js',
-		'src/server/scripts/migrations/archive/*.ts',
 	],
 	rules: {
-	
+
 		indent: ['error', 'tab', {
 			ignoredNodes: ['TemplateLiteral *'],
 			flatTernaryExpressions: true,
@@ -32,10 +31,10 @@ module.exports = {
 		'no-trailing-spaces': ['error', { skipBlankLines: true }],
 		'eol-last': ['error'],
 		'no-debugger': 'off',
-		
+
 		'no-constant-condition': ['error', { checkLoops: false }],
 		'no-extra-boolean-cast': 'off',
-		
+
 		'@typescript-eslint/ban-types': 'off', // no quick fix, revisit
 		'@typescript-eslint/no-empty-interface': 'off',
 		'@typescript-eslint/no-explicit-any': 'off',
@@ -44,12 +43,12 @@ module.exports = {
 		'@typescript-eslint/no-var-requires': 'off', // generally forced due to module system problem, lack of types or similar
 		'@typescript-eslint/no-non-null-assertion': 'off', // might want to replace with an actual runtime assertion - later
 		'@typescript-eslint/no-unused-vars': 'off', // lots of false positives and no auto fix
-		
+
 		'@typescript-eslint/no-loss-of-precision': ['error'],
 		'no-template-curly-in-string': ['error'],
 		'no-unreachable-loop': ['error'],
 		'no-unsafe-optional-chaining': ['error'],
-		
+
 		'array-callback-return': ['error'],
 		'dot-location': ['error', 'property'],
 		"@typescript-eslint/dot-notation": ["error"],
@@ -60,7 +59,7 @@ module.exports = {
 		'no-throw-literal': ['error'],
 		'no-unused-expressions': ['error', { allowTaggedTemplates: true, enforceForJSX: true }],
 		'no-useless-return': ['error'],
-		
+
 		'@typescript-eslint/quotes': ['error', 'single', { allowTemplateLiterals: true },],
 		'quote-props': ['error', 'as-needed',],
 		'@typescript-eslint/semi': ['error', 'always'],
@@ -103,11 +102,11 @@ module.exports = {
 		'arrow-spacing': ['error'],
 		'no-useless-computed-key': ['error'],
 		'@typescript-eslint/member-delimiter-style': ['error'],
-		
+
 		'prefer-object-spread': ['error'],
-		
+
 		// this does not allow for single statements spanning multiple lines. and I think it should.
 		// curly: ['error', 'multi-line', 'consistent'],
-		
+
 	}
 };
