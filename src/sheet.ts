@@ -4,6 +4,8 @@ import { config } from './common.js';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { Entry, EntryList } from './entry';
 import dayjs from 'dayjs';
+import Schema$Spreadsheet = sheets_v4.Schema$Spreadsheet;
+import Schema$CellData = sheets_v4.Schema$CellData;
 
 await mkdir('data', { recursive: true });
 const fn = 'data/sheet.json';
@@ -34,6 +36,12 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		(cd, i) => cd.effectiveValue?.stringValue?.replace(/\s+/g, ' ') ?? String(i)
 	);
 	
+	const val = (cd?: Schema$CellData) => {
+		if (cd?.effectiveValue?.stringValue) return cd?.effectiveValue?.stringValue;
+		if (cd?.effectiveValue?.numberValue) return String(cd?.effectiveValue?.numberValue);
+		return undefined;
+	};
+	
 	const cols = {
 		coords: columns.findIndex(s => s.includes('Координаты')),
 		address: columns.findIndex(s => s.includes('адрес')),
@@ -47,13 +55,14 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	};
 	const verbatim = ['address', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
 	// console.log(cols, columns);
-	const entries = rowData.slice(1).filter(row => row.values?.some(cd => !!cd?.effectiveValue?.stringValue)).map((row, i) => {
-		const llMatch = row.values![cols.coords]?.effectiveValue?.stringValue?.match(/\d+\.\d+,\s*\d+\.\d+/);
+	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
+		const llMatch = val(row.values![cols.coords])?.match(/\d+\.\d+,\s*\d+\.\d+/);
 		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;
 		const certain = !!coords && row.values![cols.coords].userEnteredValue?.stringValue?.[0] != '=';
-		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], cd?.effectiveValue?.stringValue]));
-		const etc = Object.fromEntries(verbatim.map(k => [k, row.values![cols[k]]?.effectiveValue?.stringValue]).filter(r => !!r[1]));
+		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
+		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
 		return <Entry> {
+			id: val(row.values![0]),
 			idx: i + 1,
 			coords,
 			certain,

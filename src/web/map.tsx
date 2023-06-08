@@ -5,6 +5,7 @@ import { renderToString } from 'react-dom/server';
 
 interface MapProps {
 	entries?: Entry[];
+	shown?: Entry[];
 }
 interface MapState {
 
@@ -15,12 +16,14 @@ export class MapView extends Component<MapProps, MapState> {
 	div = createRef<HTMLDivElement>();
 	map!: L.Map;
 	
+	markers = new Map<string, L.Marker>;
+	
 	render() {
 		return <div className="map" ref={this.div} />;
 	}
 	
 	shouldComponentUpdate(nextProps: Readonly<MapProps>, nextState: Readonly<MapState>, nextContext: any) {
-		if (nextProps.entries && nextProps.entries != this.props.entries) this.updateEntries(nextProps.entries);
+		if (nextProps.shown && nextProps.shown != this.props.shown) this.updateEntries(nextProps);
 		return false;
 	}
 	
@@ -42,16 +45,28 @@ export class MapView extends Component<MapProps, MapState> {
 			Visicom: visicom,
 		}).addTo(this.map);
 		
-		if (this.props.entries) this.updateEntries(this.props.entries);
+		if (this.props.shown) this.updateEntries(this.props);
 		
 	}
 	
-	updateEntries(entries: Entry[]) {
-		for (const entry of entries) {
+	updateEntries({ entries, shown }: MapProps) {
+		const seen = new Set<string>();
+		for (const entry of shown!) {
 			if (!entry.coords) continue;
-			L.marker(entry.coords, {
-				interactive: true,
-			}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} />));
+			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords]);
+			seen.add(key);
+			if (!this.markers.has(key)) {
+				console.log('add', key);
+				this.markers.set(key, L.marker(entry.coords, {
+					interactive: true,
+				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} />)));
+			}
+		}
+		for (const [key, marker] of this.markers.entries()) {
+			if (seen.has(key)) continue;
+			console.log('rm', key);
+			marker.remove();
+			this.markers.delete(key);
 		}
 	}
 	

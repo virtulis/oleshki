@@ -1,4 +1,5 @@
 export interface Entry {
+	id: string;
 	idx: number;
 	coords?: [number, number];
 	certain: boolean;
