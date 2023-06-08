@@ -45,7 +45,8 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	const cols = {
 		city: columns.findIndex(s => s.includes('Город')),
 		coords: columns.findIndex(s => s.includes('Координаты')),
-		address: columns.findIndex(s => s.includes('адрес')),
+		address: columns.findIndex(s => s.includes('адрес рус / укр')),
+		addressRu: columns.findIndex(s => s.includes('адрес по-русски')),
 		people: columns.findIndex(s => s.includes('ство человек')),
 		contact: columns.findIndex(s => s.includes('Контактный номер')),
 		contactInfo: columns.findIndex(s => s.includes('Контакт для связи')),
@@ -54,11 +55,11 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		status: columns.findIndex(s => s.includes('статус')),
 		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
-	const verbatim = ['address', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
+	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
 	
 	let entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
-		const llMatch = val(row.values![cols.coords])?.match(/\d+\.\d+,\s*\d+\.\d+/);
-		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;
+		const llMatch = val(row.values![cols.coords])?.match(/(\d+\.\d+)[,; ]\s*(\d+\.\d+)/);
+		const coords = llMatch ? [llMatch[1], llMatch[2]].map(s => Number(s.trim())) : undefined;
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
 		const certain = !!etc.address && !etc.city?.includes('старые координаты');
@@ -71,7 +72,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			...etc,
 			data: allData,
 		};
-	});
+	}).filter(row => row.coords || row.address || row.contact || row.details);
 	
 	const done = entries.filter(e => e.status == 'ВЫВЕЗЛИ').length;
 	const skip = ['ВЫВЕЗЛИ', 'приплюсовали', 'дубль'];

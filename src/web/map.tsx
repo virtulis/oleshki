@@ -82,7 +82,7 @@ export class MapView extends Component<MapProps, MapState> {
 				this.markers.set(key, L.marker(entry.coords, {
 					interactive: true,
 					icon: entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon,
-					zIndexOffset: entry.urgent ? 1000 : entry.certain ? 0 : -1000,
+					// zIndexOffset: entry.urgent ? 1000 : entry.certain ? 0 : -1000,
 				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} clownMode={clownMode} />)));
 			}
 		}
@@ -100,7 +100,7 @@ const dump = ['status', 'city', 'people', 'animals', 'contact', 'contactInfo', '
 const hide = ['details'];
 
 function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
-	const addr = !clownMode ? entry.address : entry.address?.split(' / ')[0];
+	const addr = !clownMode ? entry.address : entry.addressRu ?? entry.address?.split(' / ')[0];
 	return <div>
 		<strong>#{entry.id}</strong>
 		{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
