@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import Schema$Spreadsheet = sheets_v4.Schema$Spreadsheet;
 import Schema$CellData = sheets_v4.Schema$CellData;
 
-await mkdir('data', { recursive: true });
+await mkdir('data/history', { recursive: true });
 const fn = 'data/sheet.json';
 
 export async function fetchSheet() {
@@ -62,6 +62,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
 		const certain = !!etc.address && !etc.city?.includes('старые координаты');
+		if (val(row.values![cols.coords]) && !coords) console.log(i + 1, val(row.values![0]), val(row.values![cols.coords]));
 		return <Entry> {
 			id: val(row.values![0]),
 			idx: i + 1,
@@ -88,6 +89,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	
 	entries.forEach(e => e.data = undefined);
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
+	await writeFile(`data/history/${dayjs().format()}.json`, JSON.stringify(list, null, '\t'));
 	
 	console.log(list.updated, entries.length);
 
