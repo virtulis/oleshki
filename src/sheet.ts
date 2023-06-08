@@ -43,6 +43,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	};
 	
 	const cols = {
+		city: columns.findIndex(s => s.includes('Город')),
 		coords: columns.findIndex(s => s.includes('Координаты')),
 		address: columns.findIndex(s => s.includes('адрес')),
 		people: columns.findIndex(s => s.includes('ство человек')),
@@ -53,14 +54,14 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		status: columns.findIndex(s => s.includes('статус')),
 		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
-	const verbatim = ['address', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
+	const verbatim = ['address', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
 	// console.log(cols, columns);
 	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/\d+\.\d+,\s*\d+\.\d+/);
 		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;
-		const certain = !!coords && row.values![cols.coords].userEnteredValue?.stringValue?.[0] != '=';
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
+		const certain = !!etc.address && !etc.city?.includes('старые координаты');
 		return <Entry> {
 			id: val(row.values![0]),
 			idx: i + 1,

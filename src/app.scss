@@ -38,3 +38,12 @@ html, body {
 .map {
 	flex: 1 1 auto;
 }
+
+.marker {
+	width: 40px;
+	height: 40px;
+	svg {
+		width: 40px;
+		height: 40px;
+	}
+}

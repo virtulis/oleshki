@@ -6,6 +6,7 @@ export interface Entry {
 	urgent?: string;
 	status?: string;
 	address?: string;
+	city?: string;
 	details?: string;
 	people?: string;
 	contact?: string;

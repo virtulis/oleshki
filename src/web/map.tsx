@@ -2,6 +2,7 @@ import { Component, createRef } from 'react';
 import L from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
+import { blueIcon, greyIcon, redIcon } from './markers';
 
 interface MapProps {
 	entries?: Entry[];
@@ -56,9 +57,10 @@ export class MapView extends Component<MapProps, MapState> {
 			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords]);
 			seen.add(key);
 			if (!this.markers.has(key)) {
-				// console.log('add', key);
 				this.markers.set(key, L.marker(entry.coords, {
 					interactive: true,
+					icon: entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon,
+					zIndexOffset: entry.urgent ? 1000 : entry.certain ? 0 : -1000,
 				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} />)));
 			}
 		}
@@ -72,7 +74,7 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-const dump = ['coords', 'urgent', 'status', 'certain', 'address', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
+const dump = ['coords', 'urgent', 'status', 'certain', 'address', 'city', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
 function EntryPopup({ entry }: { entry: Entry }) {
 	return <div>
 		{dump.filter(k => entry[k]).map(k => <div>{k}: {String(entry[k])}</div>)}
