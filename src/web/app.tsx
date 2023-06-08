@@ -46,7 +46,7 @@ export class App extends Component<{}, AppState> {
 					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 					<span>{opt}</span>
 				</label>)}</div>)}
-				<div className="time">{dayjs(updated).format('HH:mm')}</div>
+				<div className="time">{dayjs(updated).format('HH:mm:ss')}</div>
 			</div>
 			<MapView clownMode={clownMode} entries={this.state.entries} shown={this.state.shown} />
 		</div>;
