@@ -113,6 +113,6 @@ function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean })
 		{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
 		<div>{addr}</div>
 		<div>{entry.coords}</div>
-		{dump.filter(k => entry[k] && (!clownMode || !hide.includes(k))).map(k => <div>{k}: {String(entry[k])}</div>)}
+		{dump.filter(k => entry[k] && (!clownMode || !hide.includes(k))).map(k => <div key={k}>{k}: {String(entry[k])}</div>)}
 	</div>;
 }

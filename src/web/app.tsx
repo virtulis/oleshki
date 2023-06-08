@@ -32,6 +32,7 @@ export class App extends Component<{}, AppState> {
 	
 	render() {
 		const { updated, shown, entries, done, noPos, options, filter, clownMode } = this.state;
+		const updTime = updated && dayjs(updated) || null;
 		const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
 			const arr = filter?.[dim];
 			const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
@@ -46,7 +47,10 @@ export class App extends Component<{}, AppState> {
 					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 					<span>{opt}</span>
 				</label>)}</div>)}
-				<div className="time">{dayjs(updated).format('HH:mm:ss')}</div>
+				<div className="time">
+					{updTime?.isBefore(dayjs().subtract(5, 'minute')) && '⚠️ '}
+					{updTime?.format('HH:mm:ss')}
+				</div>
 			</div>
 			<MapView clownMode={clownMode} entries={this.state.entries} shown={this.state.shown} />
 		</div>;
@@ -90,3 +94,6 @@ export class App extends Component<{}, AppState> {
 const root = createRoot(document.getElementById('ctor')!);
 root.render(<App />);
 
+navigator.serviceWorker.register('/worker.js', {
+	scope: '/',
+});
