@@ -2,6 +2,9 @@
 	"name": "oleshki",
 	"version": "1.0.0",
 	"type": "module",
+	"scripts": {
+		"build": "pnpm exec tsc && pnpm exec esbuild --bundle src/web/app.tsx --outfile=dist/app.js --sourcemap && pnpm exec sass src/app.scss dist/app.css"
+	},
 	"devDependencies": {
 		"@types/leaflet": "^1.9.3",
 		"@types/node": "^20.2.5",
