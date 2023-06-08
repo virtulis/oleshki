@@ -55,7 +55,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
 	const verbatim = ['address', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
-	// console.log(cols, columns);
+	console.log(cols, columns);
 	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/\d+\.\d+,\s*\d+\.\d+/);
 		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;

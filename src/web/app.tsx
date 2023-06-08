@@ -5,6 +5,7 @@ import { MapView } from './map';
 import dayjs from 'dayjs';
 
 interface AppState {
+	clownMode?: boolean;
 	updated?: string;
 	entries?: Entry[];
 	shown?: Entry[];
@@ -24,11 +25,13 @@ export class App extends Component<{}, AppState> {
 
 	constructor(props: {}) {
 		super(props);
-		this.state = {};
+		this.state = {
+			clownMode: location.protocol == 'http:',
+		};
 	}
 	
 	render() {
-		const { updated, shown, entries, done, noPos, options, filter } = this.state;
+		const { updated, shown, entries, done, noPos, options, filter, clownMode } = this.state;
 		const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
 			const arr = filter?.[dim];
 			const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
@@ -45,7 +48,7 @@ export class App extends Component<{}, AppState> {
 				</label>)}</div>)}
 				<div className="time">{dayjs(updated).format('HH:mm')}</div>
 			</div>
-			<MapView entries={this.state.entries} shown={this.state.shown} />
+			<MapView clownMode={clownMode} entries={this.state.entries} shown={this.state.shown} />
 		</div>;
 	}
 	
