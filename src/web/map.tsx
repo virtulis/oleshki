@@ -4,6 +4,8 @@ import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
 import { blueIcon, greyIcon, redIcon } from './markers';
 
+import 'leaflet.locatecontrol';
+
 interface MapProps {
 	entries?: Entry[];
 	shown?: Entry[];
@@ -44,6 +46,9 @@ export class MapView extends Component<MapProps, MapState> {
 		L.control.layers({
 			OSM: osm,
 			Visicom: visicom,
+		}).addTo(this.map);
+		L.control.locate({
+		
 		}).addTo(this.map);
 		
 		if (this.props.shown) this.updateEntries(this.props);

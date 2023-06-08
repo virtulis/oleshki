@@ -22,10 +22,12 @@
 	},
 	"dependencies": {
 		"@googleapis/sheets": "^4.0.2",
+		"@types/leaflet.locatecontrol": "^0.74.1",
 		"core-js-bundle": "^3.30.2",
 		"dayjs": "^1.11.8",
 		"google-auth-library": "^8.8.0",
 		"leaflet": "^1.9.4",
+		"leaflet.locatecontrol": "^0.79.0",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0"
 	}
