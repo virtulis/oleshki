@@ -70,7 +70,7 @@ export class App extends Component<{}, AppState> {
 	
 		const list = (await fetch('/data/entries.json').then(res => res.json())) as EntryList;
 		
-		const { updated } = list;
+		const { updated, done } = list;
 		
 		const entries = list.entries.filter(e => e.status != 'ВЫВЕЗЛИ' && e.coords);
 		
@@ -78,7 +78,6 @@ export class App extends Component<{}, AppState> {
 		const urgent = [...new Set(entries.map(e => e.urgent!).filter(s => !!s))];
 		const options = { status, urgent };
 		
-		const done = list.entries.filter(e => e.status == 'ВЫВЕЗЛИ').length;
 		const noPos = list.entries.filter(e => !e.coords).length;
 		const shown = this.filterEntries(list.entries, this.state.filter);
 		

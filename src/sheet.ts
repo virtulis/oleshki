@@ -73,7 +73,8 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	});
 	
 	const done = entries.filter(e => e.status == 'ВЫВЕЗЛИ').length;
-	entries = entries.filter(e => e.status != 'ВЫВЕЗЛИ');
+	const skip = ['ВЫВЕЗЛИ', 'приплюсовали', 'дубль'];
+	entries = entries.filter(e => !skip.includes(e.status!));
 	
 	const list: EntryList = {
 		updated: dayjs().format(),
