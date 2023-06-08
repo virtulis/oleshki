@@ -59,7 +59,7 @@ export class MapView extends Component<MapProps, MapState> {
 		this.map.on('zoomend', this.saveState);
 		
 		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
-		const maxar = L.imageOverlay(`/data/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
+		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
 		
 		L.control.layers({
 			OSM: osm,
