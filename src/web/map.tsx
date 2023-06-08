@@ -96,11 +96,17 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-const dump = ['coords', 'urgent', 'status', 'certain', 'address', 'city', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
+const dump = ['status', 'city', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
 const hide = ['details'];
 
 function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
+	const addr = !clownMode ? entry.address : entry.address?.split(' / ')[0];
 	return <div>
+		<strong>#{entry.id}</strong>
+		{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
+		{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
+		<div>{addr}</div>
+		<div>{entry.coords}</div>
 		{dump.filter(k => entry[k] && (!clownMode || !hide.includes(k))).map(k => <div>{k}: {String(entry[k])}</div>)}
 	</div>;
 }
