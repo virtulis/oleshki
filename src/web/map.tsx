@@ -46,21 +46,27 @@ export class MapView extends Component<MapProps, MapState> {
 		const osm = L.tileLayer(`/osm/{z}/{x}/{y}.png`, {
 			maxZoom: 19,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-		}).addTo(this.map);
+		});
 		const visicom = new L.TileLayer(`/visicom/2.0.0/planet3/base/{z}/{x}/{y}.png${clownMode ? '?lang=ru' : ''}`, {
 			attribution: '<a href=\'https://api.visicom.ua/\'>Визиком</a>',
 			// subdomains: '123',
 			maxZoom: 19,
 			tms: true,
 		}).addTo(this.map);
-		L.control.layers({
-			OSM: osm,
-			Visicom: visicom,
-		}).addTo(this.map);
 		L.control.locate({}).addTo(this.map);
 		
 		this.map.on('moveend', this.saveState);
 		this.map.on('zoomend', this.saveState);
+		
+		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
+		const maxar = L.imageOverlay(`/data/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
+		
+		L.control.layers({
+			OSM: osm,
+			Visicom: visicom,
+		}, clownMode ? {} : {
+			maxar,
+		}).addTo(this.map);
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
