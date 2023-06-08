@@ -12,10 +12,13 @@ export interface Entry {
 	contact?: string;
 	contactInfo?: string;
 	animals?: string;
-	data: Record<string, string>;
+	data?: Record<string, string>;
 }
 
 export interface EntryList {
 	updated: string;
+	done: number;
 	entries: Entry[];
+	columns?: string[];
+	mapping?: Record<string, number>;
 }

@@ -56,7 +56,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	};
 	const verbatim = ['address', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
 	
-	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
+	let entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/\d+\.\d+,\s*\d+\.\d+/);
 		const coords = llMatch ? llMatch[0].split(',').map(s => Number(s.trim())) : null;
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
@@ -68,15 +68,24 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			coords,
 			certain,
 			...etc,
-			// data: allData,
+			data: allData,
 		};
 	});
 	
+	const done = entries.filter(e => e.status == 'ВЫВЕЗЛИ').length;
+	entries = entries.filter(e => e.status != 'ВЫВЕЗЛИ');
+	
 	const list: EntryList = {
 		updated: dayjs().format(),
+		done,
+		columns,
+		mapping: cols,
 		entries,
 	};
 	
+	await writeFile('data/entries.data.json', JSON.stringify(list, null, '\t'));
+	
+	entries.forEach(e => e.data = undefined);
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
 	
 	console.log(list.updated, entries.length);
