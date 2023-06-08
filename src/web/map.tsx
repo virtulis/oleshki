@@ -32,7 +32,12 @@ export class MapView extends Component<MapProps, MapState> {
 	
 	componentDidMount() {
 	
-		this.map = L.map(this.div.current!).setView([46.61549, 32.69943], 11);
+		const params = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
+		const saved = params?.get('map')?.split(',').map(Number);
+		const ll = saved?.slice(0, 2) ?? [46.61549, 32.69943];
+		const zoom = saved?.[2] ?? 11;
+	
+		this.map = L.map(this.div.current!).setView(ll as L.LatLngTuple, zoom);
 		const osm = L.tileLayer('/osm/{z}/{x}/{y}.png', {
 			maxZoom: 19,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -47,13 +52,20 @@ export class MapView extends Component<MapProps, MapState> {
 			OSM: osm,
 			Visicom: visicom,
 		}).addTo(this.map);
-		L.control.locate({
+		L.control.locate({}).addTo(this.map);
 		
-		}).addTo(this.map);
+		this.map.on('moveend', this.saveState);
+		this.map.on('zoomend', this.saveState);
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
 	}
+	
+	saveState = () => {
+		const center = this.map.getCenter();
+		const state = [center.lat.toFixed(6), center.lng.toFixed(6), this.map.getZoom()].join(',');
+		history.replaceState(null, '', `#map=${state}`);
+	};
 	
 	updateEntries({ entries, shown }: MapProps) {
 		const seen = new Set<string>();
