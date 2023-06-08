@@ -39,7 +39,7 @@ export class App extends Component<{}, AppState> {
 		return <div className="app">
 			<div className="info">
 				<div className="counts">{shown?.length}/{entries?.length} | {noPos} без к. | ✔️{done} |</div>
-				{(['status', 'urgent'] as const).map(dim => <div className="filters" key={dim}>{options?.[dim]?.map(opt => <label key={opt}>
+				{(['urgent'] as const).map(dim => <div className="filters" key={dim}>{options?.[dim]?.map(opt => <label key={opt}>
 					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 					<span>{opt}</span>
 				</label>)}</div>)}
