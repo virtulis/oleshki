@@ -57,6 +57,10 @@ html, body {
 		}
 	}
 
+	.map-coords input {
+		max-width: 100%;
+	}
+
 	@media (max-width: $break) {
 		flex-direction: row;
 		align-items: center;
@@ -78,6 +82,10 @@ html, body {
 		}
 		.filters {
 			display: none;
+		}
+
+		.map-coords input {
+			max-width: 150px;
 		}
 	}
 }

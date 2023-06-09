@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component, createRef } from 'react';
 import { Entry, EntryList } from '../entry';
 import { createRoot } from 'react-dom/client';
 import { EntryPopup, MapView, MapViewState } from './map';
@@ -25,10 +25,13 @@ interface AppState {
 		animals?: boolean;
 	};
 	mapState?: MapViewState;
+	goToCoords?: string;
 	popup?: 'filters';
 }
 
 export class App extends Component<{}, AppState> {
+
+	mapView = createRef<MapView>();
 
 	constructor(props: {}) {
 		super(props);
@@ -38,7 +41,21 @@ export class App extends Component<{}, AppState> {
 	}
 	
 	render() {
-		const { updated, shown, entries, done, noPos, options, filter, clownMode, selecting, selected, popup } = this.state;
+		const {
+			updated,
+			shown,
+			entries,
+			done,
+			noPos,
+			options,
+			filter,
+			clownMode,
+			selecting,
+			selected,
+			popup,
+			mapState,
+			goToCoords,
+		} = this.state;
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
 			const shown = this.filterEntries(entries!, filter);
@@ -64,6 +81,15 @@ export class App extends Component<{}, AppState> {
 					<a onClick={this.makeCsv}>CSV</a>
 					<a onClick={this.copyListText}>Список</a>
 				</div>
+				<div className="map-coords">
+					<input
+						value={goToCoords ?? [mapState?.center?.lat?.toFixed(6), mapState?.center?.lng?.toFixed(6)].join(', ')}
+						onChange={e => this.setState({ goToCoords: e.currentTarget.value })}
+						onFocus={e => e.currentTarget.select()}
+						onBlur={this.maybeGoToCoords}
+						onKeyDown={e => { if (e.key == 'Enter') this.maybeGoToCoords(); }}
+					/>
+				</div>
 				<div className="time">
 					{updTime?.isBefore(dayjs().subtract(5, 'minute')) && '⚠️ '}
 					{updTime?.format('HH:mm:ss')}
@@ -77,6 +103,7 @@ export class App extends Component<{}, AppState> {
 				selecting={selecting}
 				onUpdated={mapState => this.setState({ mapState })}
 				onSelected={this.selectEntries}
+				ref={this.mapView}
 			/>
 			{!!popup && <div className="popup">
 				{popup == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
@@ -176,6 +203,16 @@ export class App extends Component<{}, AppState> {
 		
 		navigator.clipboard.writeText(text);
 	
+	};
+	
+	maybeGoToCoords = () => {
+		const str = this.state.goToCoords;
+		if (!str) return;
+		const coords = str.split(/[,;]/).map(n => Number(n.trim()));
+		if (coords?.length == 2 && coords.every(n => isFinite)) {
+			this.mapView.current?.map.setView(coords as L.LatLngTuple);
+			this.setState({ goToCoords: undefined });
+		}
 	};
 	
 }
