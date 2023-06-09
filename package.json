@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "pnpm exec tsc && pnpm exec esbuild --bundle src/web/app.tsx src/web/worker.ts --outdir=dist --sourcemap && pnpm exec sass src/app.scss dist/app.css && cp node_modules/core-js-bundle/minified.js dist/core.js && pnpm exec babel --presets @babel/preset-env dist/app.js  -o dist/legacy.js"
+		"build": "bash build.sh"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.21.5",
@@ -23,7 +23,9 @@
 	"dependencies": {
 		"@googleapis/sheets": "^4.0.2",
 		"@types/leaflet.locatecontrol": "^0.74.1",
+		"buffer": "^6.0.3",
 		"core-js-bundle": "^3.30.2",
+		"csv-stringify": "^6.4.0",
 		"dayjs": "^1.11.8",
 		"google-auth-library": "^8.8.0",
 		"leaflet": "^1.9.4",

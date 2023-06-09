@@ -1,8 +1,9 @@
 import { Component } from 'react';
 import { Entry, EntryList } from '../entry';
 import { createRoot } from 'react-dom/client';
-import { MapView } from './map';
+import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
+import { stringify } from 'csv-stringify/sync';
 
 interface AppState {
 	clownMode?: boolean;
@@ -19,6 +20,7 @@ interface AppState {
 		status?: string[];
 		urgent?: string[];
 	};
+	mapState?: MapViewState;
 }
 
 export class App extends Component<{}, AppState> {
@@ -47,12 +49,20 @@ export class App extends Component<{}, AppState> {
 					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 					<span>{opt}</span>
 				</label>)}</div>)}
+				<div className="actions">
+					<a onClick={this.makeCsv}>CSV</a>
+				</div>
 				<div className="time">
 					{updTime?.isBefore(dayjs().subtract(5, 'minute')) && '⚠️ '}
 					{updTime?.format('HH:mm:ss')}
 				</div>
 			</div>
-			<MapView clownMode={clownMode} entries={this.state.entries} shown={this.state.shown} />
+			<MapView
+				clownMode={!!clownMode}
+				entries={this.state.entries}
+				shown={this.state.shown}
+				onUpdated={mapState => this.setState({ mapState })}
+			/>
 		</div>;
 	}
 	
@@ -86,6 +96,36 @@ export class App extends Component<{}, AppState> {
 		const shown = this.filterEntries(list.entries, this.state.filter);
 		
 		this.setState({ updated, entries, done, noPos, shown, options });
+		
+	};
+	
+	makeCsv = (e: React.MouseEvent<HTMLAnchorElement>) => {
+	
+		const { mapState, shown } = this.state;
+		
+		if (!mapState || !shown) return alert('???');
+		const visible = shown.filter(e => e.coords && mapState.bounds.contains(e.coords));
+		
+		const header = ['ID', 'Срочно', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
+		const rows = visible.map(e => [
+			e.id,
+			e.urgent,
+			e.people,
+			e.animals,
+			e.address,
+			e.addressRu,
+			e.coords?.join(', '),
+			e.contact,
+			e.contactInfo,
+			e.details,
+		]);
+		
+		const csv = stringify([header, ...rows]);
+		
+		const blob = new Blob([csv], { type: 'text/csv' });
+		
+		e.currentTarget.href = URL.createObjectURL(blob);
+		e.currentTarget.download = `Карта-${dayjs().format('YYYYMMDDTHHmm')}.csv`;
 		
 	};
 	

@@ -9,10 +9,16 @@ import 'leaflet.locatecontrol';
 interface MapProps {
 	entries?: Entry[];
 	shown?: Entry[];
-	clownMode?: boolean;
+	clownMode: boolean;
+	onUpdated: (state: MapViewState) => void;
 }
 interface MapState {
 
+}
+export interface MapViewState {
+	bounds: L.LatLngBounds;
+	center: L.LatLng;
+	zoom: number;
 }
 
 export class MapView extends Component<MapProps, MapState> {
@@ -42,7 +48,8 @@ export class MapView extends Component<MapProps, MapState> {
 	
 		this.map = L.map(this.div.current!, {
 			attributionControl: !clownMode,
-		}).setView(ll as L.LatLngTuple, zoom);
+		});
+		
 		const osm = L.tileLayer(`/osm/{z}/{x}/{y}.png`, {
 			maxZoom: 19,
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -57,6 +64,9 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		this.map.on('moveend', this.saveState);
 		this.map.on('zoomend', this.saveState);
+		this.map.on('load', this.saveState);
+		
+		this.map.setView(ll as L.LatLngTuple, zoom);
 		
 		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
 		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
@@ -73,8 +83,11 @@ export class MapView extends Component<MapProps, MapState> {
 	}
 	
 	saveState = () => {
+		const bounds = this.map.getBounds();
 		const center = this.map.getCenter();
-		const state = [center.lat.toFixed(6), center.lng.toFixed(6), this.map.getZoom()].join(',');
+		const zoom = this.map.getZoom();
+		this.props.onUpdated({ bounds, center, zoom });
+		const state = [center.lat.toFixed(6), center.lng.toFixed(6), zoom].join(',');
 		history.replaceState(null, '', `#map=${state}`);
 	};
 	
