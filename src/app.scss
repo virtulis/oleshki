@@ -59,6 +59,13 @@ html, body {
 .popup {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
+	max-height: 50vh;
+	overflow: auto;
+}
+.entry {
+	display: flex;
+	flex-direction: column;
 	gap: 8px;
 
 	.id {

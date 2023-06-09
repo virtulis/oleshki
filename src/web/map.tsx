@@ -2,7 +2,7 @@ import { Component, createRef } from 'react';
 import L from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
-import { blueIcon, greyIcon, orangeIcon, redIcon, yellowIcon } from './markers';
+import { blueIcon, greyIcon, redBlueIcon, redIcon, yellowIcon } from './markers';
 
 import 'leaflet.locatecontrol';
 
@@ -32,6 +32,8 @@ export class MapView extends Component<MapProps, MapState> {
 	markers = new Map<string, L.Marker>;
 	selection?: L.Rectangle;
 	selectionFrom?: L.LatLng;
+	drawnBefore?: Entry[];
+	drawnAtZoom = 0;
 	
 	render() {
 		return <div className="map" ref={this.div} />;
@@ -115,42 +117,121 @@ export class MapView extends Component<MapProps, MapState> {
 	}
 	
 	saveState = () => {
+		
 		const bounds = this.map.getBounds();
 		const center = this.map.getCenter();
 		const zoom = this.map.getZoom();
+		
 		this.props.onUpdated({ bounds, center, zoom });
 		const state = [center.lat.toFixed(6), center.lng.toFixed(6), zoom].join(',');
 		history.replaceState(null, '', `#map=${state}`);
+		
+		if (this.props.shown) this.updateEntries(this.props);
+		
 	};
 	
-	updateEntries({ entries, shown, selected, clownMode }: MapProps) {
+	updateEntries({ shown, selected, clownMode }: MapProps) {
+		
+		type Group = {
+			entry: Entry;
+			entries: Entry[];
+		};
+		
+		const { markers, map } = this;
+		
 		const seen = new Set<string>();
-		for (const entry of shown!) {
+		const selSet = new Set<string>((selected ?? []).map(e => e.id));
+		const bounds = map.getBounds().pad(0.25);
+		
+		const within: Group[] = shown!
+			.filter(e => e.coords && bounds.contains(e.coords))
+			.map(entry => ({ entry, entries: [entry] }));
+			
+		const prio = new Set(this.drawnBefore && this.drawnAtZoom == map.getZoom() ? this.drawnBefore.map(e => e.id) : []);
+		// console.log(prio);
+		
+		// stable shuffle-ish
+		within.sort((a, b) => {
+			const pA = prio.has(a.entry.id);
+			const pB = prio.has(b.entry.id);
+			if (pA != pB) return Number(pB) - Number(pA);
+			return a.entry.id?.at(-1)?.localeCompare(b.entry.id?.at(-1) ?? '') || a.entry.id?.localeCompare(b.entry.id || '') || 0;
+		});
+		// console.log(within.map(e => e.entry.id));
+		
+		// const draw = new Set(within);
+		const limit = 200;
+		const draw: Group[] = [];
+		let mustGroup = within.length - limit;
+		const thresh = (map.getSize().x + map.getSize().y) / 50;
+		console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
+		
+		const t = performance.now();
+		for (const group of within) {
+			if (!selSet.has(group.entry.id) && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
+				let best = draw[0];
+				let bestDist = Infinity;
+				for (const other of draw) {
+					if (!!group.entry.urgent != !!other.entry.urgent || selSet.has(other.entry.id)) continue;
+					const dist = map.distance(group.entry.coords!, other.entry.coords!);
+					if (dist >= bestDist) continue;
+					best = other;
+					bestDist = dist;
+				}
+				const a = map.latLngToContainerPoint(group.entry.coords!);
+				const b = map.latLngToContainerPoint(best.entry.coords!);
+				if (a.distanceTo(b) < thresh) {
+					best.entries.push(group.entry);
+					mustGroup--;
+					continue;
+				}
+			}
+			draw.push(group);
+		}
+		console.log('d', draw.length, 'mgl', mustGroup);
+		console.log('t', performance.now() - t);
+		
+		for (const { entry, entries } of draw) {
 			if (!entry.coords) continue;
-			const mark = !!selected?.some(e => e.id == entry.id);
+			const mark = selSet.has(entry.id);
 			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords, mark]);
 			seen.add(key);
-			if (!this.markers.has(key)) {
-				this.markers.set(key, L.marker(entry.coords, {
+			const popup = () => renderToString(<div className="popup">{entries.map((entry, i) => <>
+				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
+				<EntryPopup entry={entry} clownMode={clownMode} />
+			</>)}</div>);
+			const icon = mark ? yellowIcon : entries.length > 1 ? redBlueIcon : entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon;
+			let marker = markers.get(key);
+			if (!marker) {
+				marker = L.marker(entry.coords, {
 					interactive: true,
-					icon: mark ? yellowIcon : entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon,
-					// zIndexOffset: entry.urgent ? 1000 : entry.certain ? 0 : -1000,
-				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} clownMode={clownMode} />)));
+					icon,
+				}).addTo(map);
+				markers.set(key, marker);
 			}
+			else {
+				marker.setIcon(icon);
+			}
+			marker.bindPopup(popup);
 		}
-		for (const [key, marker] of this.markers.entries()) {
+		
+		for (const [key, marker] of markers.entries()) {
 			if (seen.has(key)) continue;
 			// console.log('rm', key);
 			marker.remove();
-			this.markers.delete(key);
+			markers.delete(key);
 		}
+		
+		this.drawnBefore = draw.map(g => g.entry);
+		this.drawnAtZoom = map.getZoom();
+		
 	}
 	
 }
 
 export function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
 	const addr = !clownMode ? entry.address : entry.addressRu ?? entry.address?.split(' / ')[0];
-	return <div className="popup">
+	return <div className="entry">
 		<div className="id">
 			<strong>#{entry.id}</strong>
 			{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
