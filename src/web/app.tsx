@@ -21,6 +21,7 @@ interface AppState {
 	filter?: {
 		status?: string[];
 		urgent?: string[];
+		animals?: boolean;
 	};
 	mapState?: MapViewState;
 }
@@ -37,12 +38,15 @@ export class App extends Component<{}, AppState> {
 	render() {
 		const { updated, shown, entries, done, noPos, options, filter, clownMode, selecting, selected } = this.state;
 		const updTime = updated && dayjs(updated) || null;
+		const setFilter = (filter: AppState['filter']) => {
+			const shown = this.filterEntries(entries!, filter);
+			this.setState({ filter, shown });
+		};
 		const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
 			const arr = filter?.[dim];
 			const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
 			const upd = { ...filter, [dim]: res?.length ? res : undefined };
-			const shown = this.filterEntries(entries!, upd);
-			this.setState({ filter: upd, shown });
+			setFilter(upd);
 		};
 		return <div className="app">
 			<div className="info">
@@ -51,6 +55,12 @@ export class App extends Component<{}, AppState> {
 					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 					<span>{opt}</span>
 				</label>)}</div>)}
+				<div className="filters">
+					<label>
+						<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
+						<span>Животные</span>
+					</label>
+				</div>
 				<div className="actions">
 					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
 					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
@@ -83,6 +93,7 @@ export class App extends Component<{}, AppState> {
 			&& entry.coords
 			&& (!filter?.status || filter?.status.includes(entry.status!))
 			&& (!filter?.urgent || filter?.urgent.includes(entry.urgent!))
+			&& (!filter?.animals || !!entry.animals)
 		));
 	}
 	

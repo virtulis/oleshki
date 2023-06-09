@@ -140,7 +140,7 @@ function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean })
 			</span>}
 		</div>
 		{!!addr && <div title="Адрес">🏠 {addr}</div>}
-		{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}
+		{/*{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}*/}
 		<div className="Координаты">🌐 {entry.coords?.join(', ')}</div>
 		{!!entry.contact && <div title="Телефон">📞 {entry.contact}</div>}
 		{!!entry.contactInfo && <div title="Контактная информация">💬 {entry.contactInfo}</div>}
