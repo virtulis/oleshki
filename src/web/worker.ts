@@ -1,6 +1,8 @@
 // @ts-nocheck
 
 self.addEventListener('install', async (ev: any) => {
+	const cache = await caches.open('cache');
+	await cache.addAll('/', '/dist/app.js', '/dist/app.css', '/data/entries.json');
 	await self.skipWaiting();
 	console.log('sw install');
 });
@@ -37,7 +39,7 @@ self.addEventListener('fetch', async (ev: any) => {
 			const res = await Promise.race([fr, sleep(1000)]);
 			if (res?.ok) return res;
 		}
-		return ex;
+		return ex ?? fetch(req);
 	})().catch(e => {
 		console.error(e);
 		return fetch(req);
