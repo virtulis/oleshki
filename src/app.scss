@@ -1,3 +1,5 @@
+$break: 800px;
+
 body {
 	padding: 0;
 	margin: 0;
@@ -13,32 +15,69 @@ html, body {
 	height: 100svh;
 	position: relative;
 	display: flex;
-	flex-direction: column;
+
+	@media (max-width: $break) {
+		flex-direction: column;
+	}
 }
 
 .info {
-	border-bottom: 1px solid black;
+	border: 1px solid black;
 	background: white;
 	flex: 0 0 auto;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: 16px;
 	padding: 4px;
-	align-items: center;
+	flex-direction: column;
+	width: 200px;
+	overflow-x: visible;
+	overflow-y: auto;
 
 	.time {
 		margin-left: auto;
 	}
-	.filters, .actions {
+	.actions {
 		display: flex;
 		flex-wrap: wrap;
+		//flex-direction: column;
+		//align-items: flex-start;
 		gap: 4px;
-	}
 
-	.actions {
 		a {
 			text-decoration: underline;
 			cursor: pointer;
+			border: 1px solid black;
+			display: inline-block;
+			padding: 2px;
+		}
+
+		.mobile-toggle {
+			display: none;
+		}
+	}
+
+	@media (max-width: $break) {
+		flex-direction: row;
+		align-items: center;
+		width: auto;
+		gap: 4px;
+
+		.actions {
+			.mobile-toggle {
+				display: inline-block;
+			}
+		}
+		.actions, .counts {
+			display: flex;
+			align-items: center;
+			flex-direction: row;
+		}
+		.counts {
+			gap: 8px;
+		}
+		.filters {
+			display: none;
 		}
 	}
 }
@@ -75,4 +114,30 @@ html, body {
 	.people {
 		font-size: 20px;
 	}
+}
+
+.filters {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.map {
+	z-index: 0;
+}
+
+.popup {
+	position: fixed;
+	background: white;
+	border: 1px solid black;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	max-height: 80svh;
 }

@@ -25,6 +25,7 @@ interface AppState {
 		animals?: boolean;
 	};
 	mapState?: MapViewState;
+	popup?: 'filters';
 }
 
 export class App extends Component<{}, AppState> {
@@ -37,32 +38,27 @@ export class App extends Component<{}, AppState> {
 	}
 	
 	render() {
-		const { updated, shown, entries, done, noPos, options, filter, clownMode, selecting, selected } = this.state;
+		const { updated, shown, entries, done, noPos, options, filter, clownMode, selecting, selected, popup } = this.state;
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
 			const shown = this.filterEntries(entries!, filter);
 			this.setState({ filter, shown });
 		};
-		const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
-			const arr = filter?.[dim];
-			const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
-			const upd = { ...filter, [dim]: res?.length ? res : undefined };
-			setFilter(upd);
-		};
+		const filterCount = (
+			(filter?.status && Object.values(filter.status).filter(b => b).length || 0)
+			+ (filter?.urgent && Object.values(filter.urgent).filter(b => b).length || 0)
+			+ Number(!!filter?.animals)
+		);
 		return <div className="app">
 			<div className="info">
-				<div className="counts">{shown?.length}/{entries?.length} | {noPos} без к. | ✔️{done} |</div>
-				{(['urgent'] as const).map(dim => <div className="filters" key={dim}>{options?.[dim]?.map(opt => <label key={opt}>
-					<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
-					<span>{opt}</span>
-				</label>)}</div>)}
-				<div className="filters">
-					<label>
-						<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
-						<span>Животные</span>
-					</label>
+				<div className="counts">
+					<div>{shown?.length}/{entries?.length}</div>
+					<div>{noPos} без к.</div>
+					<div>✔️{done}</div>
 				</div>
+				{popup != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
 				<div className="actions">
+					<a className="mobile-toggle" onClick={() => this.setState({ popup: popup == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
 					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
 					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
 					<a onClick={this.makeCsv}>CSV</a>
@@ -82,6 +78,9 @@ export class App extends Component<{}, AppState> {
 				onUpdated={mapState => this.setState({ mapState })}
 				onSelected={this.selectEntries}
 			/>
+			{!!popup && <div className="popup">
+				{popup == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+			</div>}
 		</div>;
 	}
 	
@@ -181,9 +180,38 @@ export class App extends Component<{}, AppState> {
 	
 }
 
+function FilterConfig({ filter, setFilter, options }: {
+	filter: AppState['filter'];
+	setFilter: (filter: AppState['filter']) => void;
+	options: AppState['options'];
+}) {
+	
+	const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
+		const arr = filter?.[dim];
+		const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
+		const upd = { ...filter, [dim]: res?.length ? res : undefined };
+		setFilter(upd);
+	};
+	
+	return <div className="filters">
+		{(['urgent', 'status'] as const).map(dim => <div className="filter-group" key={dim}>{options?.[dim]?.map(opt => <label key={opt}>
+			<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
+			<span>{opt}</span>
+		</label>)}</div>)}
+		<div className="filter-group">
+			<label>
+				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
+				<span>Животные</span>
+			</label>
+		</div>
+	</div>;
+}
+
+
 const root = createRoot(document.getElementById('ctor')!);
 root.render(<App />);
 
 navigator.serviceWorker.register('/worker.js', {
 	scope: '/',
 });
+

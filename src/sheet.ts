@@ -55,13 +55,15 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		status: columns.findIndex(s => s.includes('статус')),
 		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
-	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'status', 'urgent'] as const;
+	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details'] as const;
 	
 	let entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/(\d+\.\d+)[,; ]\s*(\d+\.\d+)/);
 		const coords = llMatch ? [llMatch[1], llMatch[2]].map(s => Number(s.trim())) : undefined;
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
+		const status = val(row.values![cols.status])?.toLowerCase();
+		const urgent = val(row.values![cols.urgent])?.toLowerCase();
 		const certain = !!etc.address && !etc.city?.includes('старые координаты');
 		if (val(row.values![cols.coords]) && !coords) console.log(i + 1, val(row.values![0]), val(row.values![cols.coords]));
 		return <Entry> {
@@ -70,14 +72,16 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			coords,
 			certain,
 			...etc,
-			remain: etc.status == 'Решили остаться',
-			medical: etc.urgent == 'медицина',
+			status,
+			urgent,
+			remain: status == 'решили остаться',
+			medical: urgent == 'медицина',
 			data: allData,
 		};
 	}).filter(row => row.coords || row.address || row.contact || row.details);
 	
-	const done = entries.filter(e => e.status == 'ВЫВЕЗЛИ').length;
-	const skip = ['ВЫВЕЗЛИ', 'приплюсовали', 'дубль'];
+	const done = entries.filter(e => e.status == 'вывезли').length;
+	const skip = ['вывезли', 'приплюсовали', 'дубль'];
 	entries = entries.filter(e => !skip.includes(e.status!));
 	
 	const list: EntryList = {
