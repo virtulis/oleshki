@@ -26,7 +26,7 @@ interface AppState {
 	};
 	mapState?: MapViewState;
 	goToCoords?: string;
-	popup?: 'filters';
+	drawer?: 'filters';
 }
 
 export class App extends Component<{}, AppState> {
@@ -52,7 +52,7 @@ export class App extends Component<{}, AppState> {
 			clownMode,
 			selecting,
 			selected,
-			popup,
+			drawer,
 			mapState,
 			goToCoords,
 		} = this.state;
@@ -73,9 +73,9 @@ export class App extends Component<{}, AppState> {
 					<div>{noPos} без к.</div>
 					<div>✔️{done}</div>
 				</div>
-				{popup != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
 				<div className="actions">
-					<a className="mobile-toggle" onClick={() => this.setState({ popup: popup == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
+					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
 					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
 					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
 					<a onClick={this.makeCsv}>CSV</a>
@@ -105,8 +105,8 @@ export class App extends Component<{}, AppState> {
 				onSelected={this.selectEntries}
 				ref={this.mapView}
 			/>
-			{!!popup && <div className="popup">
-				{popup == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+			{!!drawer && <div className="drawer">
+				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
 			</div>}
 		</div>;
 	}
