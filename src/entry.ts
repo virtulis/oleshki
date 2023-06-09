@@ -3,6 +3,7 @@ export interface Entry {
 	idx: number;
 	coords?: [number, number];
 	certain: boolean;
+	remain?: boolean;
 	urgent?: string;
 	status?: string;
 	address?: string;

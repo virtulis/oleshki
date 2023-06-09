@@ -172,7 +172,11 @@ export class MapView extends Component<MapProps, MapState> {
 				let best = draw[0];
 				let bestDist = Infinity;
 				for (const other of draw) {
-					if (!!group.entry.urgent != !!other.entry.urgent || selSet.has(other.entry.id)) continue;
+					if (
+						!!group.entry.urgent != !!other.entry.urgent
+						|| !!group.entry.remain != !!other.entry.remain
+						|| selSet.has(other.entry.id)
+					) continue;
 					const dist = map.distance(group.entry.coords!, other.entry.coords!);
 					if (dist >= bestDist) continue;
 					best = other;
@@ -200,7 +204,13 @@ export class MapView extends Component<MapProps, MapState> {
 				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
 				<EntryPopup entry={entry} clownMode={clownMode} />
 			</>)}</div>);
-			const icon = mark ? yellowIcon : entries.length > 1 ? redBlueIcon : entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon;
+			const icon = (mark
+				? yellowIcon
+				: entries.length > 1 ? redBlueIcon
+				: entry.urgent ? redIcon
+				: !entry.remain ? blueIcon
+				: greyIcon
+			);
 			let marker = markers.get(key);
 			if (!marker) {
 				marker = L.marker(entry.coords, {

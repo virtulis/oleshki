@@ -70,6 +70,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			coords,
 			certain,
 			...etc,
+			remain: etc.status == 'Решили остаться',
 			data: allData,
 		};
 	}).filter(row => row.coords || row.address || row.contact || row.details);
