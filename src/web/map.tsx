@@ -155,6 +155,7 @@ export function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boo
 			<strong>#{entry.id}</strong>
 			{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
 			{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
+			{'\n'}
 		</div>
 		<div className="people">
 			<span title="Людей">
@@ -165,12 +166,13 @@ export function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boo
 				{' + 🐾 '}
 				{entry.animals}
 			</span>}
+			{'\n'}
 		</div>
-		{!!addr && <div title="Адрес">🏠 {addr}</div>}
+		{!!addr && <div title="Адрес">🏠 {addr}{'\n'}</div>}
 		{/*{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}*/}
-		<div className="Координаты">🌐 {entry.coords?.join(', ')}</div>
-		{!!entry.contact && <div title="Телефон">📞 {entry.contact}</div>}
-		{!!entry.contactInfo && <div title="Контактная информация">💬 {entry.contactInfo}</div>}
-		{!clownMode && !!entry.details && <div title="Детали">ℹ️ {entry.details}</div>}
+		<div className="Координаты">🌐 {entry.coords?.join(', ')}{'\n'}</div>
+		{!!entry.contact && <div title="Телефон">📞 {entry.contact}{'\n'}</div>}
+		{!!entry.contactInfo && <div title="Контактная информация">💬 {entry.contactInfo}{'\n'}</div>}
+		{!clownMode && !!entry.details && <div title="Детали">ℹ️ {entry.details}{'\n'}</div>}
 	</div>;
 }

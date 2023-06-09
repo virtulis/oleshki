@@ -66,6 +66,7 @@ export class App extends Component<{}, AppState> {
 					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
 					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
 					<a onClick={this.makeCsv}>CSV</a>
+					<a onClick={this.copyListText}>Список</a>
 				</div>
 				<div className="time">
 					{updTime?.isBefore(dayjs().subtract(5, 'minute')) && '⚠️ '}
@@ -127,11 +128,15 @@ export class App extends Component<{}, AppState> {
 		this.setState({ selected });
 	};
 	
+	getSelected() {
+		const { mapState, shown, selected } = this.state;
+		return selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds.contains(e.coords));
+	}
+	
 	makeCsv = (e: React.MouseEvent<HTMLAnchorElement>) => {
 	
-		const { mapState, shown, selected } = this.state;
-		const list = selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds.contains(e.coords));
-		if (!mapState || !list?.length) return alert('Ничего не выбрано');
+		const list = this.getSelected();
+		if (!list?.length) return alert('Ничего не выбрано');
 		
 		const header = ['ID', 'Срочно', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
 		const rows = list.map(e => [
@@ -154,6 +159,24 @@ export class App extends Component<{}, AppState> {
 		e.currentTarget.href = URL.createObjectURL(blob);
 		e.currentTarget.download = `Карта-${dayjs().format('YYYYMMDDTHHmm')}.csv`;
 		
+	};
+	
+	copyListText = () => {
+		
+		const list = this.getSelected();
+		if (!list?.length) return alert('Ничего не выбрано');
+		
+		const html = renderToString(<div>{[list.map(e => <>
+			<EntryPopup entry={e} clownMode={this.state.clownMode} />
+			{'\n\n'}
+		</>)]}</div>);
+		
+		const div = document.createElement('div');
+		div.innerHTML = html;
+		const text = div.innerText!;
+		
+		navigator.clipboard.writeText(text);
+	
 	};
 	
 }
