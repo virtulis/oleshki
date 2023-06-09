@@ -102,17 +102,29 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-const dump = ['status', 'city', 'people', 'animals', 'contact', 'contactInfo', 'details'] as const;
-const hide = ['details'];
-
 function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
 	const addr = !clownMode ? entry.address : entry.addressRu ?? entry.address?.split(' / ')[0];
-	return <div>
-		<strong>#{entry.id}</strong>
-		{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
-		{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
-		<div>{addr}</div>
-		<div>{entry.coords}</div>
-		{dump.filter(k => entry[k] && (!clownMode || !hide.includes(k))).map(k => <div key={k}>{k}: {String(entry[k])}</div>)}
+	return <div className="popup">
+		<div className="id">
+			<strong>#{entry.id}</strong>
+			{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
+			{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
+		</div>
+		<div className="people">
+			<span title="Людей">
+				👥{' '}
+				{entry.people ?? '?'}
+			</span>
+			{!!entry.animals && <span title="Животных">
+				{' + 🐾 '}
+				{entry.animals}
+			</span>}
+		</div>
+		{!!addr && <div title="Адрес">🏠 {addr}</div>}
+		{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}
+		<div className="Координаты">🌐 {entry.coords?.join(', ')}</div>
+		{!!entry.contact && <div title="Телефон">📞 {entry.contact}</div>}
+		{!!entry.contactInfo && <div title="Контактная информация">💬 {entry.contactInfo}</div>}
+		{!clownMode && !!entry.details && <div title="Детали">ℹ️ {entry.details}</div>}
 	</div>;
 }
