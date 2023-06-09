@@ -10,6 +10,8 @@ interface AppState {
 	updated?: string;
 	entries?: Entry[];
 	shown?: Entry[];
+	selected?: Entry[];
+	selecting?: boolean;
 	done?: number;
 	noPos?: number;
 	options?: {
@@ -33,7 +35,7 @@ export class App extends Component<{}, AppState> {
 	}
 	
 	render() {
-		const { updated, shown, entries, done, noPos, options, filter, clownMode } = this.state;
+		const { updated, shown, entries, done, noPos, options, filter, clownMode, selecting, selected } = this.state;
 		const updTime = updated && dayjs(updated) || null;
 		const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
 			const arr = filter?.[dim];
@@ -50,6 +52,8 @@ export class App extends Component<{}, AppState> {
 					<span>{opt}</span>
 				</label>)}</div>)}
 				<div className="actions">
+					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
+					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
 					<a onClick={this.makeCsv}>CSV</a>
 				</div>
 				<div className="time">
@@ -59,8 +63,10 @@ export class App extends Component<{}, AppState> {
 			</div>
 			<MapView
 				clownMode={!!clownMode}
-				entries={this.state.entries}
-				shown={this.state.shown}
+				entries={entries}
+				shown={shown}
+				selected={selected}
+				selecting={selecting}
 				onUpdated={mapState => this.setState({ mapState })}
 			/>
 		</div>;

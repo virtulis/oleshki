@@ -11,6 +11,8 @@ interface MapProps {
 	shown?: Entry[];
 	clownMode: boolean;
 	onUpdated: (state: MapViewState) => void;
+	selected?: Entry[];
+	selecting?: boolean;
 }
 interface MapState {
 
@@ -62,12 +64,6 @@ export class MapView extends Component<MapProps, MapState> {
 		}).addTo(this.map);
 		L.control.locate({}).addTo(this.map);
 		
-		this.map.on('moveend', this.saveState);
-		this.map.on('zoomend', this.saveState);
-		this.map.on('load', this.saveState);
-		
-		this.map.setView(ll as L.LatLngTuple, zoom);
-		
 		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
 		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
 		
@@ -77,6 +73,16 @@ export class MapView extends Component<MapProps, MapState> {
 		}, clownMode ? {} : {
 			maxar,
 		}).addTo(this.map);
+		
+		this.map.on('moveend', this.saveState);
+		this.map.on('zoomend', this.saveState);
+		this.map.on('load', this.saveState);
+		
+		this.map.on('mousedown', event => {
+			if (!this.props.selecting) return;
+		});
+		
+		this.map.setView(ll as L.LatLngTuple, zoom);
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
