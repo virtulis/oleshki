@@ -4,6 +4,7 @@ export interface Entry {
 	coords?: [number, number];
 	certain: boolean;
 	remain?: boolean;
+	medical?: boolean;
 	urgent?: string;
 	status?: string;
 	address?: string;

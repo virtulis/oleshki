@@ -71,6 +71,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			certain,
 			...etc,
 			remain: etc.status == 'Решили остаться',
+			medical: etc.urgent == 'медицина',
 			data: allData,
 		};
 	}).filter(row => row.coords || row.address || row.contact || row.details);

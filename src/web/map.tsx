@@ -168,12 +168,12 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		const t = performance.now();
 		for (const group of within) {
-			if (!selSet.has(group.entry.id) && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
+			if (!selSet.has(group.entry.id) && !group.entry.medical && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
 				let best = draw[0];
 				let bestDist = Infinity;
 				for (const other of draw) {
 					if (
-						!!group.entry.urgent != !!other.entry.urgent
+						!!group.entry.medical != !!other.entry.medical
 						|| !!group.entry.remain != !!other.entry.remain
 						|| selSet.has(other.entry.id)
 					) continue;
@@ -198,7 +198,7 @@ export class MapView extends Component<MapProps, MapState> {
 		for (const { entry, entries } of draw) {
 			if (!entry.coords) continue;
 			const mark = selSet.has(entry.id);
-			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords, mark]);
+			const key = JSON.stringify([entry.id, entry.medical, entry.status, entry.coords, mark]);
 			seen.add(key);
 			const popup = () => renderToString(<div className="popup">{entries.map((entry, i) => <>
 				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
@@ -207,7 +207,7 @@ export class MapView extends Component<MapProps, MapState> {
 			const icon = (mark
 				? yellowIcon
 				: entries.length > 1 ? redBlueIcon
-				: entry.urgent ? redIcon
+				: entry.medical ? redIcon
 				: !entry.remain ? blueIcon
 				: greyIcon
 			);
@@ -216,6 +216,7 @@ export class MapView extends Component<MapProps, MapState> {
 				marker = L.marker(entry.coords, {
 					interactive: true,
 					icon,
+					zIndexOffset: entry.medical ? 10000 : entry.remain ? -10000 : 0,
 				}).addTo(map);
 				markers.set(key, marker);
 			}
