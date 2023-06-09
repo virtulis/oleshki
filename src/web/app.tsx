@@ -1,9 +1,10 @@
 import { Component } from 'react';
 import { Entry, EntryList } from '../entry';
 import { createRoot } from 'react-dom/client';
-import { MapView, MapViewState } from './map';
+import { EntryPopup, MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
+import { renderToString } from 'react-dom/server';
 
 interface AppState {
 	clownMode?: boolean;
@@ -78,6 +79,7 @@ export class App extends Component<{}, AppState> {
 				selected={selected}
 				selecting={selecting}
 				onUpdated={mapState => this.setState({ mapState })}
+				onSelected={this.selectEntries}
 			/>
 		</div>;
 	}
@@ -116,15 +118,23 @@ export class App extends Component<{}, AppState> {
 		
 	};
 	
+	selectEntries = (entries: Entry[]) => {
+		const ex = this.state.selected ?? [];
+		const selected = [
+			...ex,
+			...entries.filter(e => !ex.some(o => o.id == e.id)),
+		];
+		this.setState({ selected });
+	};
+	
 	makeCsv = (e: React.MouseEvent<HTMLAnchorElement>) => {
 	
-		const { mapState, shown } = this.state;
-		
-		if (!mapState || !shown) return alert('???');
-		const visible = shown.filter(e => e.coords && mapState.bounds.contains(e.coords));
+		const { mapState, shown, selected } = this.state;
+		const list = selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds.contains(e.coords));
+		if (!mapState || !list?.length) return alert('Ничего не выбрано');
 		
 		const header = ['ID', 'Срочно', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
-		const rows = visible.map(e => [
+		const rows = list.map(e => [
 			e.id,
 			e.urgent,
 			e.people,

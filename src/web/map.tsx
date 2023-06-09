@@ -2,7 +2,7 @@ import { Component, createRef } from 'react';
 import L from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
-import { blueIcon, greyIcon, redIcon } from './markers';
+import { blueIcon, greyIcon, orangeIcon, redIcon, yellowIcon } from './markers';
 
 import 'leaflet.locatecontrol';
 
@@ -11,6 +11,7 @@ interface MapProps {
 	shown?: Entry[];
 	clownMode: boolean;
 	onUpdated: (state: MapViewState) => void;
+	onSelected: (entries: Entry[]) => void;
 	selected?: Entry[];
 	selecting?: boolean;
 }
@@ -29,13 +30,15 @@ export class MapView extends Component<MapProps, MapState> {
 	map!: L.Map;
 	
 	markers = new Map<string, L.Marker>;
+	selection?: L.Rectangle;
+	selectionFrom?: L.LatLng;
 	
 	render() {
 		return <div className="map" ref={this.div} />;
 	}
 	
 	shouldComponentUpdate(nextProps: Readonly<MapProps>, nextState: Readonly<MapState>, nextContext: any) {
-		if (nextProps.shown && nextProps.shown != this.props.shown) this.updateEntries(nextProps);
+		if (nextProps.shown && (nextProps.shown != this.props.shown || nextProps.selected != this.props.selected)) this.updateEntries(nextProps);
 		return false;
 	}
 	
@@ -79,7 +82,30 @@ export class MapView extends Component<MapProps, MapState> {
 		this.map.on('load', this.saveState);
 		
 		this.map.on('mousedown', event => {
-			if (!this.props.selecting) return;
+			if (this.selection) this.selection.remove();
+			if (!this.props.selecting || event.originalEvent.button) return;
+			this.selectionFrom = event.latlng;
+			this.selection = new L.Rectangle(new L.LatLngBounds(event.latlng, event.latlng), {
+				color: '#f80',
+			}).addTo(this.map);
+			event.originalEvent.stopImmediatePropagation();
+			event.originalEvent.preventDefault();
+		});
+		this.map.on('mousemove', event => {
+			if (!this.selection || !this.selectionFrom) return;
+			this.selection.setBounds(new L.LatLngBounds(this.selectionFrom, event.latlng));
+			event.originalEvent.stopImmediatePropagation();
+			event.originalEvent.preventDefault();
+		});
+		this.map.on('mouseup', event => {
+			if (!this.selection || !this.selectionFrom) return;
+			event.originalEvent.stopImmediatePropagation();
+			event.originalEvent.preventDefault();
+			const bounds = this.selection.getBounds();
+			const add = this.props.shown!.filter(e => e.coords && bounds.contains(e.coords));
+			this.props.onSelected(add);
+			this.selection.remove();
+			this.selection = undefined;
 		});
 		
 		this.map.setView(ll as L.LatLngTuple, zoom);
@@ -97,16 +123,17 @@ export class MapView extends Component<MapProps, MapState> {
 		history.replaceState(null, '', `#map=${state}`);
 	};
 	
-	updateEntries({ entries, shown, clownMode }: MapProps) {
+	updateEntries({ entries, shown, selected, clownMode }: MapProps) {
 		const seen = new Set<string>();
 		for (const entry of shown!) {
 			if (!entry.coords) continue;
-			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords]);
+			const mark = !!selected?.some(e => e.id == entry.id);
+			const key = JSON.stringify([entry.id, entry.urgent, entry.status, entry.coords, mark]);
 			seen.add(key);
 			if (!this.markers.has(key)) {
 				this.markers.set(key, L.marker(entry.coords, {
 					interactive: true,
-					icon: entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon,
+					icon: mark ? yellowIcon : entry.urgent ? redIcon : entry.certain ? blueIcon : greyIcon,
 					// zIndexOffset: entry.urgent ? 1000 : entry.certain ? 0 : -1000,
 				}).addTo(this.map).bindPopup(layer => renderToString(<EntryPopup entry={entry} clownMode={clownMode} />)));
 			}
@@ -121,7 +148,7 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
+export function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
 	const addr = !clownMode ? entry.address : entry.addressRu ?? entry.address?.split(' / ')[0];
 	return <div className="popup">
 		<div className="id">
