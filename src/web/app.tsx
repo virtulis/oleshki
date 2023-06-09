@@ -118,8 +118,7 @@ export class App extends Component<{}, AppState> {
 	
 	filterEntries(all: Entry[], filter: AppState['filter']) {
 		return all.filter(entry => (
-			entry.status != 'ВЫВЕЗЛИ'
-			&& entry.coords
+			entry.coords
 			&& (!filter?.status || filter?.status.includes(entry.status!))
 			&& (!filter?.urgent || filter?.urgent.includes(entry.urgent!))
 			&& (!filter?.animals || !!entry.animals)
@@ -132,7 +131,7 @@ export class App extends Component<{}, AppState> {
 		
 		const { updated, done } = list;
 		
-		const entries = list.entries.filter(e => e.status != 'ВЫВЕЗЛИ' && e.coords);
+		const entries = list.entries.filter(e => e.coords);
 		
 		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s))];
 		const urgent = [...new Set(entries.map(e => e.urgent!).filter(s => !!s))];
@@ -238,7 +237,7 @@ function FilterConfig({ filter, setFilter, options }: {
 		<div className="filter-group">
 			<label>
 				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
-				<span>Животные</span>
+				<span>животные</span>
 			</label>
 		</div>
 	</div>;

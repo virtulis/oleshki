@@ -81,7 +81,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	}).filter(row => row.coords || row.address || row.contact || row.details);
 	
 	const done = entries.filter(e => e.status == 'вывезли').length;
-	const skip = ['вывезли', 'приплюсовали', 'дубль'];
+	const skip = ['вывезли', 'приплюсовали', 'дубль', 'пустая строка'];
 	entries = entries.filter(e => !skip.includes(e.status!));
 	
 	const list: EntryList = {
