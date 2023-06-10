@@ -12,6 +12,7 @@ interface MapProps {
 	clownMode: boolean;
 	onUpdated: (state: MapViewState) => void;
 	onSelected: (entries: Entry[]) => void;
+	toggleSelected: (entry: Entry) => void;
 	selected?: Entry[];
 	selecting?: boolean;
 }
@@ -32,6 +33,7 @@ export class MapView extends Component<MapProps, MapState> {
 	markers = new Map<string, L.Marker>;
 	selection?: L.Rectangle;
 	selectionFrom?: L.LatLng;
+	selectedLine?: L.Polyline;
 	drawnBefore?: Entry[];
 	drawnAtZoom = 0;
 	
@@ -84,14 +86,19 @@ export class MapView extends Component<MapProps, MapState> {
 		this.map.on('load', this.saveState);
 		
 		this.map.on('mousedown', event => {
+			
 			if (this.selection) this.selection.remove();
 			if (!this.props.selecting || event.originalEvent.button) return;
+			
+			
 			this.selectionFrom = event.latlng;
 			this.selection = new L.Rectangle(new L.LatLngBounds(event.latlng, event.latlng), {
 				color: '#f80',
 			}).addTo(this.map);
+			
 			event.originalEvent.stopImmediatePropagation();
 			event.originalEvent.preventDefault();
+			
 		});
 		this.map.on('mousemove', event => {
 			if (!this.selection || !this.selectionFrom) return;
@@ -164,7 +171,7 @@ export class MapView extends Component<MapProps, MapState> {
 		const draw: Group[] = [];
 		let mustGroup = within.length - limit;
 		const thresh = (map.getSize().x + map.getSize().y) / 50;
-		console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
+		// console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
 		
 		const t = performance.now();
 		for (const group of within) {
@@ -192,8 +199,8 @@ export class MapView extends Component<MapProps, MapState> {
 			}
 			draw.push(group);
 		}
-		console.log('d', draw.length, 'mgl', mustGroup);
-		console.log('t', performance.now() - t);
+		// console.log('d', draw.length, 'mgl', mustGroup);
+		// console.log('t', performance.now() - t);
 		
 		for (const { entry, entries } of draw) {
 			if (!entry.coords) continue;
@@ -217,13 +224,28 @@ export class MapView extends Component<MapProps, MapState> {
 					interactive: true,
 					icon,
 					zIndexOffset: entry.medical ? 10000 : entry.remain ? -10000 : 0,
+					// bubblingMouseEvents: false,
 				}).addTo(map);
 				markers.set(key, marker);
+				marker.on('mousedown', event => {
+					if (this.props.selecting && !event.originalEvent.button) {
+						L.DomEvent.stop(event);
+						this.props.toggleSelected(entry);
+					}
+				});
 			}
 			else {
 				marker.setIcon(icon);
 			}
 			marker.bindPopup(popup);
+		}
+		
+		if (this.selectedLine) {
+			this.selectedLine.remove();
+			this.selectedLine = undefined;
+		}
+		if (selected) {
+			this.selectedLine = L.polyline(selected.map(e => e.coords!), { color: '#f80' }).addTo(map);
 		}
 		
 		for (const [key, marker] of markers.entries()) {

@@ -103,6 +103,7 @@ export class App extends Component<{}, AppState> {
 				selecting={selecting}
 				onUpdated={mapState => this.setState({ mapState })}
 				onSelected={this.selectEntries}
+				toggleSelected={this.toggleSelected}
 				ref={this.mapView}
 			/>
 			{!!drawer && <div className="drawer">
@@ -161,7 +162,12 @@ export class App extends Component<{}, AppState> {
 		];
 		this.setState({ selected });
 	};
-	
+	toggleSelected = (entry: Entry) => {
+		console.log('toggleSelected');
+		const ex = this.state.selected ?? [];
+		const selected = ex.some(e => e.id == entry.id) ? ex.filter(e => e.id != entry.id) : [...ex, entry];
+		this.setState({ selected });
+	};
 	getSelected() {
 		const { mapState, shown, selected } = this.state;
 		return selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds.contains(e.coords));
