@@ -4,6 +4,9 @@ dependencies:
   '@googleapis/sheets':
     specifier: ^4.0.2
     version: 4.0.2
+  '@sentry/browser':
+    specifier: ^7.54.0
+    version: 7.54.0
   '@sentry/react':
     specifier: ^7.54.0
     version: 7.54.0(react@18.2.0)

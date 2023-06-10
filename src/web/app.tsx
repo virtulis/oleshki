@@ -1,10 +1,9 @@
 import { Component, createRef } from 'react';
 import { Entry, EntryList } from '../entry';
 import { createRoot } from 'react-dom/client';
-import { EntryPopup, MapView, MapViewState } from './map';
+import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
-import { renderToString } from 'react-dom/server';
 import * as Sentry from '@sentry/react';
 
 Sentry.init({
