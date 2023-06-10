@@ -5,6 +5,11 @@ import { EntryPopup, MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
 import { renderToString } from 'react-dom/server';
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
+});
 
 interface AppState {
 	clownMode?: boolean;

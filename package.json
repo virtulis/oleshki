@@ -22,6 +22,7 @@
 	},
 	"dependencies": {
 		"@googleapis/sheets": "^4.0.2",
+		"@sentry/react": "^7.54.0",
 		"@types/leaflet.locatecontrol": "^0.74.1",
 		"buffer": "^6.0.3",
 		"core-js-bundle": "^3.30.2",
