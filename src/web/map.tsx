@@ -1,8 +1,8 @@
 import { Component, createRef } from 'react';
-import L from 'leaflet';
+import L, { LatLng, LatLngExpression } from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
-import { blueIcon, greyIcon, redBlueIcon, redIcon, yellowIcon } from './markers';
+import {blueIcon, greenIcon, greyIcon, orangeIcon, redBlueIcon, redIcon, yellowIcon} from './markers';
 
 import 'leaflet.locatecontrol';
 
@@ -107,14 +107,28 @@ export class MapView extends Component<MapProps, MapState> {
 			event.originalEvent.preventDefault();
 		});
 		this.map.on('mouseup', event => {
+			
 			if (!this.selection || !this.selectionFrom) return;
 			event.originalEvent.stopImmediatePropagation();
 			event.originalEvent.preventDefault();
+			
 			const bounds = this.selection.getBounds();
-			const add = this.props.shown!.filter(e => e.coords && bounds.contains(e.coords));
+			const found = this.props.shown!.filter(e => e.coords && bounds.contains(e.coords));
+			const add: Entry[] = [];
+			
+			const prev = this.props.selected;
+			let last: LatLngExpression = prev?.[prev?.length - 1].coords ?? this.selectionFrom!;
+			while (found.length) {
+				found.sort((a, b) => this.map.distance(last, a.coords!) - this.map.distance(last, b.coords!));
+				const pt = found.shift()!;
+				add.push(pt);
+				last = pt.coords!;
+			}
+			
 			this.props.onSelected(add);
 			this.selection.remove();
 			this.selection = undefined;
+			
 		});
 		
 		this.map.setView(ll as L.LatLngTuple, zoom);
@@ -214,7 +228,11 @@ export class MapView extends Component<MapProps, MapState> {
 				<EntryPopup entry={entry} clownMode={clownMode} />
 			</>)}</div>);
 			const icon = (mark
-				? yellowIcon
+				? (
+					selected?.[0].id == entry.id ? orangeIcon
+					: selected?.[selected?.length - 1]?.id == entry.id ? greenIcon
+					: yellowIcon
+				)
 				: entries.length > 1 ? redBlueIcon
 				: entry.medical ? redIcon
 				: !entry.remain ? blueIcon
