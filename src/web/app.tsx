@@ -26,7 +26,7 @@ interface AppState {
 	};
 	mapState?: MapViewState;
 	goToCoords?: string;
-	drawer?: 'filters';
+	drawer?: 'filters' | 'disclaimer';
 }
 
 export class App extends Component<{}, AppState> {
@@ -70,8 +70,10 @@ export class App extends Component<{}, AppState> {
 			<div className="info">
 				<div className="counts">
 					<div>{shown?.length}/{entries?.length}</div>
-					<div>{noPos} без к.</div>
-					<div>✔️{done}</div>
+					{/*<div>{noPos} без к.</div>*/}
+					{/*<div>✔️{done}</div>*/}
+					<div><a href="/evacuated.html">эвакуированы</a></div>
+					<div><a href="/in_search.html">пропавшие</a></div>
 				</div>
 				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
 				<div className="actions">
@@ -107,6 +109,14 @@ export class App extends Component<{}, AppState> {
 			/>
 			{!!drawer && <div className="drawer">
 				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+				{drawer == 'disclaimer' && <div className="disclaimer">
+					<span className="icon">⚠️</span>
+					<div>
+						Информация на карте обновляется с задержкой. Некоторые дома уже эвакуированы, но там, где мы не можем получить подтверждение, мы сохраняем метки на карте.<br />
+						См. также списки <a href="/evacuated.html">эвакуированных</a> и <a href="/in_search.html">пропавших</a>.
+					</div>
+					<button onClick={this.hideDisclaimer}>OK</button>
+				</div>}
 			</div>}
 		</div>;
 	}
@@ -114,6 +124,7 @@ export class App extends Component<{}, AppState> {
 	componentDidMount() {
 		this.reloadEntries();
 		setInterval(this.reloadEntries, 20000);
+		if (!sessionStorage.sawDisclaimer) this.setState({ drawer: 'disclaimer' });
 	}
 	
 	filterEntries(all: Entry[], filter: AppState['filter']) {
@@ -212,6 +223,11 @@ export class App extends Component<{}, AppState> {
 			this.mapView.current?.map.setView(coords as L.LatLngTuple);
 			this.setState({ goToCoords: undefined });
 		}
+	};
+	
+	hideDisclaimer = () => {
+		sessionStorage.sawDisclaimer = 'yes';
+		this.setState({ drawer: undefined });
 	};
 	
 }
