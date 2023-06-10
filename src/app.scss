@@ -72,12 +72,12 @@ html, body {
 				display: inline-block;
 			}
 		}
-		.actions, .counts {
+		.actions, .counts, .links {
 			display: flex;
 			align-items: center;
 			flex-direction: row;
 		}
-		.counts {
+		.links, .counts {
 			gap: 8px;
 		}
 		.filters {

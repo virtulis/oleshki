@@ -68,13 +68,11 @@ export class App extends Component<{}, AppState> {
 		);
 		return <div className="app">
 			<div className="info">
-				<div className="counts">
-					<div>{shown?.length}/{entries?.length}</div>
-					{/*<div>{noPos} без к.</div>*/}
-					{/*<div>✔️{done}</div>*/}
-					<div><a href="/evacuated.html">эвакуированы</a></div>
-					<div><a href="/in_search.html">пропавшие</a></div>
+				<div className="links">
+					<div><a href="/evacuated.html">Эвакуированы ≡</a></div>
+					<div><a href="/in_search.html">Пропавшие ≡</a></div>
 				</div>
+				<div className="counts">{shown?.length}/{entries?.length}</div>
 				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
 				<div className="actions">
 					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
