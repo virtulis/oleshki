@@ -175,7 +175,7 @@ export class MapView extends Component<MapProps, MapState> {
 		const thresh = (map.getSize().x + map.getSize().y) / 50;
 		// console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
 		
-		const t = performance.now();
+		// const t = performance.now();
 		for (const group of within) {
 			if (!selSet.has(group.entry.id) && !group.entry.medical && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
 				let best = draw[0];
@@ -264,12 +264,12 @@ export class MapView extends Component<MapProps, MapState> {
 	
 }
 
-export function EntryPopup({ entry, clownMode }: { entry: Entry; clownMode?: boolean }) {
+export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode?: boolean; noId?: boolean }) {
 	const addr = !clownMode ? entry.address : entry.addressRu ?? entry.address?.split(' / ')[0];
 	return <div className="entry">
 		<div className="id">
-			<strong>#{entry.id}</strong>
-			{entry.urgent ? <strong> - {entry.urgent}</strong> : ''}
+			{!noId && <strong>#{entry.id}</strong>}
+			{entry.urgent ? <strong>{!noId && ' - '}{entry.urgent}</strong> : ''}
 			{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
 			{'\n'}
 		</div>

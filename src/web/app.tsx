@@ -206,21 +206,33 @@ export class App extends Component<{}, AppState> {
 		
 	};
 	
-	copyListText = () => {
+	copyListText = async () => {
+		
+		const { clownMode } = this.state;
 		
 		const list = this.getSelected();
 		if (!list?.length) return alert('Ничего не выбрано');
 		
-		const html = renderToString(<div>{[list.map(e => <>
-			<EntryPopup entry={e} clownMode={this.state.clownMode} />
-			{'\n\n'}
-		</>)]}</div>);
+		const text = list.map(e => {
+			const addr = !clownMode ? e.address : e.addressRu ?? e.address?.split(' / ')[0];
+			return [
+				!!e.urgent && `❗ ${e.urgent}`,
+				`👥 ${e.people ?? '?'}${e.animals ? ` + 🐾 ${e.animals}` : ''}`,
+				addr && `🏠 ${addr}`,
+				e.coords && `🌐 ${e.coords?.join(', ')}`,
+				e.contact && `📞 ${e.contact}`,
+				e.contactInfo && `💬 ${e.contactInfo}`,
+				!clownMode && e.details && `ℹ️ ${e.details}`,
+			].filter(v => !!v).map(s => (s as string).trim()).join('\n');
+		}).join('\n\n');
 		
-		const div = document.createElement('div');
-		div.innerHTML = html;
-		const text = div.innerText!;
-		
-		navigator.clipboard.writeText(text);
+		try {
+			await navigator.clipboard.writeText(text);
+		}
+		catch (e) {
+			Sentry?.captureException(e);
+			alert(text);
+		}
 	
 	};
 	
