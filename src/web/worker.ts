@@ -28,7 +28,7 @@ self.addEventListener('fetch', async (ev: any) => {
 			if (res?.ok) await cache.put(req, res.clone());
 			return res;
 		}
-		if (ex && (url.pathname.startsWith('/data/') || url.pathname.startsWith('/dist/') || url.pathname == '/')) {
+		if (ex && (url.pathname.startsWith('/data/') || url.pathname.startsWith('/dist/') || url.pathname == '/') || url.pathname.endsWith('.html')) {
 			const fr = fetch(req).then(async res => {
 				if (res.ok) await cache.put(req, res.clone());
 				return res;
@@ -36,7 +36,7 @@ self.addEventListener('fetch', async (ev: any) => {
 				// console.error(e);
 				return null;
 			});
-			const res = await Promise.race([fr, sleep(1000)]);
+			const res = await Promise.race([fr, sleep(2000)]);
 			if (res?.ok) return res;
 		}
 		return ex ?? fetch(req);
