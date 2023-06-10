@@ -159,10 +159,12 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		// stable shuffle-ish
 		within.sort((a, b) => {
-			const pA = prio.has(a.entry.id);
-			const pB = prio.has(b.entry.id);
+			const idA = a.entry.id ?? '';
+			const idB = b.entry.id ?? '';
+			const pA = prio.has(idA);
+			const pB = prio.has(idB);
 			if (pA != pB) return Number(pB) - Number(pA);
-			return a.entry.id?.at(-1)?.localeCompare(b.entry.id?.at(-1) ?? '') || a.entry.id?.localeCompare(b.entry.id || '') || 0;
+			return idA[idA.length - 1]?.localeCompare(idB[idB.length - 1] || '') || idA?.localeCompare(idB || '') || 0;
 		});
 		// console.log(within.map(e => e.entry.id));
 		

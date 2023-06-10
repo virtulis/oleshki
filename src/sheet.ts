@@ -65,9 +65,17 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		const status = val(row.values![cols.status])?.toLowerCase();
 		const urgent = val(row.values![cols.urgent])?.toLowerCase();
 		const certain = !!etc.address && !etc.city?.includes('старые координаты');
-		if (val(row.values![cols.coords]) && !coords) console.log(i + 1, val(row.values![0]), val(row.values![cols.coords]));
+		
+		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), val(row.values![cols.coords]));
+		
+		let id = val(row.values![0]);
+		if (!id || !id.match(/^\w+$/)) {
+			console.log('строка', i + 1, 'ID??? =', id)
+			id = `R${i + 1}`;
+		}
+		
 		return <Entry> {
-			id: val(row.values![0]),
+			id,
 			idx: i + 1,
 			coords,
 			certain,
