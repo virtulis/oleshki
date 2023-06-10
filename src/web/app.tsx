@@ -272,7 +272,6 @@ function FilterConfig({ filter, setFilter, options }: {
 const root = createRoot(document.getElementById('ctor')!);
 root.render(<App />);
 
-navigator.serviceWorker.register('/worker.js', {
+navigator.serviceWorker?.register('/worker.js', {
 	scope: '/',
 });
-
