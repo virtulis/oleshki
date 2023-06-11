@@ -27,6 +27,8 @@ interface AppState {
 		status?: string[];
 		urgent?: string[];
 		animals?: boolean;
+		remain?: boolean;
+		rescued?: boolean;
 	};
 	mapState?: MapViewState;
 	goToCoords?: string;
@@ -136,6 +138,8 @@ export class App extends Component<{}, AppState> {
 			&& (!filter?.status || filter?.status.includes(entry.status!))
 			&& (!filter?.urgent || filter?.urgent.includes(entry.urgent!))
 			&& (!filter?.animals || !!entry.animals)
+			&& (!entry.remain || filter?.remain)
+			&& (!entry.rescued || filter?.rescued)
 		));
 	}
 	
@@ -266,14 +270,26 @@ function FilterConfig({ filter, setFilter, options }: {
 	};
 	
 	return <div className="filters">
-		{(['urgent', 'status'] as const).map(dim => <div className="filter-group" key={dim}>{options?.[dim]?.map(opt => <label key={opt}>
-			<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
-			<span>{opt}</span>
-		</label>)}</div>)}
+		{(['urgent', 'status'] as const).map(dim => <div className="filter-group" key={dim}>
+			{options?.[dim]?.map(opt => <label key={opt}>
+				<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
+				<span>{opt}</span>
+			</label>)}
+		</div>)}
 		<div className="filter-group">
 			<label>
 				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
 				<span>животные</span>
+			</label>
+		</div>
+		<div className="filter-group">
+			<label>
+				<input type="checkbox" checked={!!filter?.remain} onChange={e => setFilter({ ...filter, remain: e.currentTarget.checked })} />
+				<span>решили остаться</span>
+			</label>
+			<label>
+				<input type="checkbox" checked={!!filter?.rescued} onChange={e => setFilter({ ...filter, rescued: e.currentTarget.checked })} />
+				<span>эвакуированные</span>
 			</label>
 		</div>
 	</div>;

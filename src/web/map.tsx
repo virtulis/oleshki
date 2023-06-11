@@ -2,9 +2,8 @@ import { Component, createRef } from 'react';
 import L, { LatLng, LatLngExpression } from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
-import {blueIcon, greenIcon, greyIcon, orangeIcon, redBlueIcon, redIcon, yellowIcon} from './markers';
-
 import 'leaflet.locatecontrol';
+import { IconColor, icons } from './markers';
 
 interface MapProps {
 	entries?: Entry[];
@@ -156,6 +155,7 @@ export class MapView extends Component<MapProps, MapState> {
 		type Group = {
 			entry: Entry;
 			entries: Entry[];
+			color: IconColor;
 		};
 		
 		const { markers, map } = this;
@@ -164,9 +164,22 @@ export class MapView extends Component<MapProps, MapState> {
 		const selSet = new Set<string>((selected ?? []).map(e => e.id));
 		const bounds = map.getBounds().pad(0.25);
 		
+		const getColor = (entry: Entry) => (selSet.has(entry.id)
+			? (
+				selected?.[0].id == entry.id ? 'orange'
+				: selected?.[selected?.length - 1]?.id == entry.id ? 'green'
+				: 'yellow'
+			)
+			: entry.uncertain ? 'violet'
+			: entry.medical ? 'red'
+			: entry.rescued ? 'green'
+			: entry.remain ? 'teal'
+			: 'blue'
+		);
+		
 		const within: Group[] = shown!
 			.filter(e => e.coords && bounds.contains(e.coords))
-			.map(entry => ({ entry, entries: [entry] }));
+			.map(entry => ({ entry, entries: [entry], color: getColor(entry) }));
 			
 		const prio = new Set(this.drawnBefore && this.drawnAtZoom == map.getZoom() ? this.drawnBefore.map(e => e.id) : []);
 		// console.log(prio);
@@ -195,11 +208,7 @@ export class MapView extends Component<MapProps, MapState> {
 				let best = draw[0];
 				let bestDist = Infinity;
 				for (const other of draw) {
-					if (
-						!!group.entry.medical != !!other.entry.medical
-						|| !!group.entry.remain != !!other.entry.remain
-						|| selSet.has(other.entry.id)
-					) continue;
+					if (other.color != group.color) continue;
 					const dist = map.distance(group.entry.coords!, other.entry.coords!);
 					if (dist >= bestDist) continue;
 					best = other;
@@ -218,33 +227,21 @@ export class MapView extends Component<MapProps, MapState> {
 		// console.log('d', draw.length, 'mgl', mustGroup);
 		// console.log('t', performance.now() - t);
 		
-		for (const { entry, entries } of draw) {
+		for (const { entry, entries, color } of draw) {
 			if (!entry.coords) continue;
 			const mark = selSet.has(entry.id);
 			const key = JSON.stringify([entry.id, entry.medical, entry.status, entry.coords, mark]);
 			seen.add(key);
-			const popup = () => renderToString(<div className="popup">{entries.map((entry, i) => <>
+			const popup = () => renderToString(<div className="popup">
 				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
-				<EntryPopup entry={entry} clownMode={clownMode} />
-			</>)}</div>);
-			const icon = (mark
-				? (
-					selected?.[0].id == entry.id ? orangeIcon
-					: selected?.[selected?.length - 1]?.id == entry.id ? greenIcon
-					: yellowIcon
-				)
-				: entries.length > 1 ? redBlueIcon
-				: entry.medical ? redIcon
-				: !entry.remain ? blueIcon
-				: greyIcon
-			);
+				{entries.map(entry => <EntryPopup entry={entry} clownMode={clownMode} />)}
+			</div>);
+			const icon = icons[color][entries.length > 1 ? 'multi' : 'single'];
 			let marker = markers.get(key);
 			if (!marker) {
 				marker = L.marker(entry.coords, {
 					interactive: true,
 					icon,
-					zIndexOffset: entry.medical ? 10000 : entry.remain ? -10000 : 0,
-					// bubblingMouseEvents: false,
 				}).addTo(map);
 				markers.set(key, marker);
 				marker.on('mousedown', event => {

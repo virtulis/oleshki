@@ -2,8 +2,9 @@ export interface Entry {
 	id: string;
 	idx: number;
 	coords?: [number, number];
-	certain: boolean;
+	uncertain: boolean;
 	remain?: boolean;
+	rescued?: boolean;
 	medical?: boolean;
 	urgent?: string;
 	status?: string;

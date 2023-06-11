@@ -37,8 +37,8 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	);
 	
 	const val = (cd?: Schema$CellData) => {
-		if (cd?.effectiveValue?.stringValue) return cd?.effectiveValue?.stringValue;
-		if (cd?.effectiveValue?.numberValue) return String(cd?.effectiveValue?.numberValue);
+		if (cd?.effectiveValue?.stringValue) return cd?.effectiveValue?.stringValue?.trim();
+		if (cd?.effectiveValue?.numberValue) return String(cd?.effectiveValue?.numberValue)?.trim();
 		return undefined;
 	};
 	
@@ -64,7 +64,6 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
 		const status = val(row.values![cols.status])?.toLowerCase();
 		const urgent = val(row.values![cols.urgent])?.toLowerCase();
-		const certain = !!etc.address && !etc.city?.includes('старые координаты');
 		
 		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), val(row.values![cols.coords]));
 		
@@ -78,18 +77,19 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			id,
 			idx: i + 1,
 			coords,
-			certain,
 			...etc,
 			status,
 			urgent,
 			remain: status == 'решили остаться',
 			medical: urgent == 'медицина',
+			uncertain: status?.includes('нет данных'),
+			rescued: status == 'вывезли',
 			data: allData,
 		};
 	}).filter(row => row.coords || row.address || row.contact || row.details);
 	
 	const done = entries.filter(e => e.status == 'вывезли').length;
-	const skip = ['вывезли', 'приплюсовали', 'дубль', 'пустая строка'];
+	const skip = ['приплюсовали', 'дубль', 'пустая строка'];
 	entries = entries.filter(e => !skip.includes(e.status!));
 	
 	const list: EntryList = {
