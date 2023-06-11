@@ -2,7 +2,22 @@ import L from 'leaflet';
 
 const img = '/leaflet-color-markers/img/';
 
-const colors = ['blue', 'red', 'green', 'orange', 'yellow', 'teal', 'violet', 'grey', 'black'] as const;
+const colors = [
+	
+	'blue',
+	'red',
+	'green',
+	'orange',
+	'yellow',
+	'teal',
+	'violet',
+	'grey',
+	'black',
+	
+	'yellow-a',
+	'yellow-b',
+	
+] as const;
 export type IconColor = (typeof colors)[number];
 
 export const icons = Object.fromEntries(colors.map(color => [color, {

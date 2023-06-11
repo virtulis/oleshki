@@ -1,5 +1,5 @@
 import { Component, createRef } from 'react';
-import L, { LatLng, LatLngExpression, LatLngTuple } from 'leaflet';
+import L, { LatLngExpression, LatLngTuple } from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
 import 'leaflet.locatecontrol';
@@ -106,17 +106,20 @@ export class MapView extends Component<MapProps, MapState> {
 			}).addTo(this.map);
 			
 			L.DomEvent.stop(event);
+			event.originalEvent.stopImmediatePropagation();
 			
 		});
 		this.map.on('mousemove', event => {
 			if (!this.selection || !this.selectionFrom) return;
 			this.selection.setBounds(new L.LatLngBounds(this.selectionFrom, event.latlng));
 			L.DomEvent.stop(event);
+			event.originalEvent.stopImmediatePropagation();
 		});
 		this.map.on('mouseup', event => {
 			
 			if (!this.selection || !this.selectionFrom) return;
 			L.DomEvent.stop(event);
+			event.originalEvent.stopImmediatePropagation();
 			
 			const bounds = this.selection.getBounds();
 			const found = this.props.shown!.filter(e => e.coords && bounds.contains(e.coords));
@@ -166,12 +169,14 @@ export class MapView extends Component<MapProps, MapState> {
 		
 	};
 	
-	updateEntries({ shown, selected, clownMode }: MapProps) {
+	updateEntries({ shown, selected, clownMode }: MapProps, open?: Entry) {
 		
 		type Group = {
+			coords: L.LatLng;
 			entry: Entry;
 			entries: Entry[];
 			color: IconColor;
+			point: L.Point;
 		};
 		
 		const { markers, map } = this;
@@ -182,8 +187,8 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		const getColor = (entry: Entry) => (selSet.has(entry.id)
 			? (
-				selected?.[0].id == entry.id ? 'orange'
-				: selected?.[selected?.length - 1]?.id == entry.id ? 'green'
+				selected?.[0].id == entry.id ? 'yellow-a'
+				: selected?.[selected?.length - 1]?.id == entry.id ? 'yellow-b'
 				: 'yellow'
 			)
 			: entry.uncertain ? 'violet'
@@ -195,7 +200,13 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		const within: Group[] = shown!
 			.filter(e => e.coords && bounds.contains(e.coords))
-			.map(entry => ({ entry, entries: [entry], color: getColor(entry) }));
+			.map(entry => ({
+				entry,
+				coords: new L.LatLng(...entry.coords!),
+				entries: [entry],
+				color: getColor(entry),
+				point: map.latLngToContainerPoint(entry.coords!),
+			}));
 			
 		const prio = new Set(this.drawnBefore && this.drawnAtZoom == map.getZoom() ? this.drawnBefore.map(e => e.id) : []);
 		// console.log(prio);
@@ -218,21 +229,19 @@ export class MapView extends Component<MapProps, MapState> {
 		const thresh = (map.getSize().x + map.getSize().y) / 50;
 		// console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
 		
-		// const t = performance.now();
+		const t = performance.now();
 		for (const group of within) {
 			if (!selSet.has(group.entry.id) && !group.entry.medical && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
 				let best = draw[0];
 				let bestDist = Infinity;
 				for (const other of draw) {
 					if (other.color != group.color) continue;
-					const dist = map.distance(group.entry.coords!, other.entry.coords!);
+					const dist = map.distance(group.coords, other.coords);
 					if (dist >= bestDist) continue;
 					best = other;
 					bestDist = dist;
 				}
-				const a = map.latLngToContainerPoint(group.entry.coords!);
-				const b = map.latLngToContainerPoint(best.entry.coords!);
-				if (a.distanceTo(b) < thresh) {
+				if (group.point.distanceTo(best.point) < thresh) {
 					best.entries.push(group.entry);
 					mustGroup--;
 					continue;
@@ -240,13 +249,46 @@ export class MapView extends Component<MapProps, MapState> {
 			}
 			draw.push(group);
 		}
+		
+		let iter = 0;
+		let fixed = 0;
+		do {
+			if (iter++ > 10) break;
+			fixed = 0;
+			for (const group of draw) {
+				for (const other of draw) {
+					if (group == other) continue;
+					const dist = Math.ceil(group.point.distanceTo(other.point));
+					if (dist > 5) continue;
+					if (group.color == other.color) {
+						// console.log('grp', dist, group.entry.id, other.entry.id, draw.indexOf(group));
+						other.entries.push(...group.entries);
+						group.entries = [];
+						draw.splice(draw.indexOf(group), 1);
+					}
+					else {
+						const fpt = new L.Point(
+							group.point.x + ((Math.sign(group.point.x - other.point.x) || 1) * 5),
+							group.point.y + ((Math.sign(group.point.y - other.point.y) || 1) * 5)
+						);
+						// console.log('ded', dist, group.entry.id, other.entry.id, draw.indexOf(group), [group.point.x, group.point.y], [fpt.x, fpt.y]);
+						group.coords = map.containerPointToLatLng(fpt);
+						group.point = fpt;
+						fixed++;
+					}
+					break;
+				}
+			}
+			// draw = draw.filter(g => g.entries.length);
+			// console.log('dd', draw.length, fixed);
+		} while (fixed);
+		
 		// console.log('d', draw.length, 'mgl', mustGroup);
 		// console.log('t', performance.now() - t);
 		
-		for (const { entry, entries, color } of draw) {
-			if (!entry.coords) continue;
+		for (const { entry, coords, entries, color } of draw) {
 			const mark = selSet.has(entry.id);
-			const key = JSON.stringify([entry.id, entry.medical, entry.status, entry.coords, mark]);
+			const key = JSON.stringify([entry.id, entry.medical, entry.status, coords, mark]);
 			seen.add(key);
 			const popup = () => renderToString(<div className="popup">
 				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
@@ -255,7 +297,7 @@ export class MapView extends Component<MapProps, MapState> {
 			const icon = icons[color][entries.length > 1 ? 'multi' : 'single'];
 			let marker = markers.get(key);
 			if (!marker) {
-				marker = L.marker(entry.coords, {
+				marker = L.marker(coords, {
 					interactive: true,
 					icon,
 				}).addTo(map);
@@ -271,6 +313,7 @@ export class MapView extends Component<MapProps, MapState> {
 				marker.setIcon(icon);
 			}
 			marker.bindPopup(popup);
+			if (open && entries.some(e => e.id == open.id)) marker.openPopup();
 		}
 		
 		if (this.selectedLine) {
@@ -310,10 +353,7 @@ export class MapView extends Component<MapProps, MapState> {
 	goToEntry(entry: Entry) {
 		const ll = new L.LatLng(...entry.coords!);
 		this.map.setView(ll, Math.max(this.map.getZoom(), 16), { animate: false });
-		this.updateEntries(this.props);
-		const key = JSON.stringify([entry.id, entry.medical, entry.status, entry.coords, !!this.props.selected?.some(e => e.id == entry.id)]);
-		const marker = this.markers.get(key)!;
-		marker.openPopup();
+		this.updateEntries(this.props, entry);
 	}
 	
 }
