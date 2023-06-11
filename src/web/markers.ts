@@ -27,4 +27,12 @@ export const icons = Object.fromEntries(colors.map(color => [color, {
 	multi: L.Icon;
 }>;
 
+export const locationIcon = new L.Icon({
+	iconUrl: `${img}circle.png`,
+	// shadowUrl: img + 'marker-shadow.png',
+	iconSize: [25, 25],
+	iconAnchor: [12, 12],
+	popupAnchor: [0, 0],
+	// shadowSize: [41, 41],
+});
 

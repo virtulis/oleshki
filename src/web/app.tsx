@@ -89,12 +89,12 @@ export class App extends Component<{}, AppState> {
 				</div>
 				<div className="map-coords">
 					<input
-						value={goToCoords ?? [mapState?.center?.lat?.toFixed(6), mapState?.center?.lng?.toFixed(6)].join(', ')}
+						value={goToCoords ?? ''}
 						onChange={e => this.setState({ goToCoords: e.currentTarget.value })}
 						onFocus={e => e.currentTarget.select()}
-						onBlur={this.maybeGoToCoords}
 						onKeyDown={e => { if (e.key == 'Enter') this.maybeGoToCoords(); }}
 					/>
+					<button onClick={this.maybeGoToCoords}>🡪</button>
 				</div>
 				<div className="time">
 					{updTime?.isBefore(dayjs().subtract(5, 'minute')) && '⚠️ '}
@@ -244,8 +244,11 @@ export class App extends Component<{}, AppState> {
 		if (!str) return;
 		const coords = str.split(/[,;]/).map(n => Number(n.trim()));
 		if (coords?.length == 2 && coords.every(n => isFinite)) {
-			this.mapView.current?.map.setView(coords as L.LatLngTuple);
+			this.mapView.current!.goToCoords(coords);
 			this.setState({ goToCoords: undefined });
+		}
+		else {
+			alert(coords.join(', '));
 		}
 	};
 	

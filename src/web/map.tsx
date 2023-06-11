@@ -1,9 +1,9 @@
 import { Component, createRef } from 'react';
-import L, { LatLng, LatLngExpression } from 'leaflet';
+import L, { LatLng, LatLngExpression, LatLngTuple } from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
 import 'leaflet.locatecontrol';
-import { IconColor, icons } from './markers';
+import { IconColor, icons, locationIcon } from './markers';
 
 interface MapProps {
 	entries?: Entry[];
@@ -30,6 +30,7 @@ export class MapView extends Component<MapProps, MapState> {
 	map!: L.Map;
 	
 	markers = new Map<string, L.Marker>;
+	locationMarker!: L.Marker;
 	selection?: L.Rectangle;
 	selectionFrom?: L.LatLng;
 	selectedLine?: L.Polyline;
@@ -51,7 +52,7 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		const params = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
 		const saved = params?.get('map')?.split(',').map(Number);
-		const ll = saved?.slice(0, 2) ?? [46.61549, 32.69943];
+		const ll = saved?.slice(0, 2) as LatLngTuple ?? [46.61549, 32.69943];
 		const zoom = saved?.[2] ?? 11;
 	
 		this.map = L.map(this.div.current!, {
@@ -80,6 +81,16 @@ export class MapView extends Component<MapProps, MapState> {
 			maxar,
 		}).addTo(this.map);
 		
+		const lm = this.locationMarker = new L.Marker(ll, {
+			interactive: true,
+			icon: locationIcon,
+		}); // do not .addTo(this.map);
+		lm.bindPopup('');
+		lm.on('click', () => {
+			lm.setPopupContent(this.formatCoords(lm.getLatLng()));
+			lm.openPopup();
+		});
+		
 		this.map.on('moveend', this.saveState);
 		this.map.on('zoomend', this.saveState);
 		this.map.on('load', this.saveState);
@@ -89,27 +100,23 @@ export class MapView extends Component<MapProps, MapState> {
 			if (this.selection) this.selection.remove();
 			if (!this.props.selecting || event.originalEvent.button) return;
 			
-			
 			this.selectionFrom = event.latlng;
 			this.selection = new L.Rectangle(new L.LatLngBounds(event.latlng, event.latlng), {
 				color: '#f80',
 			}).addTo(this.map);
 			
-			event.originalEvent.stopImmediatePropagation();
-			event.originalEvent.preventDefault();
+			L.DomEvent.stop(event);
 			
 		});
 		this.map.on('mousemove', event => {
 			if (!this.selection || !this.selectionFrom) return;
 			this.selection.setBounds(new L.LatLngBounds(this.selectionFrom, event.latlng));
-			event.originalEvent.stopImmediatePropagation();
-			event.originalEvent.preventDefault();
+			L.DomEvent.stop(event);
 		});
 		this.map.on('mouseup', event => {
 			
 			if (!this.selection || !this.selectionFrom) return;
-			event.originalEvent.stopImmediatePropagation();
-			event.originalEvent.preventDefault();
+			L.DomEvent.stop(event);
 			
 			const bounds = this.selection.getBounds();
 			const found = this.props.shown!.filter(e => e.coords && bounds.contains(e.coords));
@@ -130,6 +137,15 @@ export class MapView extends Component<MapProps, MapState> {
 			
 		});
 		
+		this.map.on('contextmenu', event => {
+			L.DomEvent.stop(event);
+			lm
+				.addTo(this.map)
+				.setLatLng(event.latlng)
+				.setPopupContent(this.formatCoords(event.latlng))
+				.openPopup();
+		});
+		
 		this.map.setView(ll as L.LatLngTuple, zoom);
 		
 		if (this.props.shown) this.updateEntries(this.props);
@@ -143,7 +159,7 @@ export class MapView extends Component<MapProps, MapState> {
 		const zoom = this.map.getZoom();
 		
 		this.props.onUpdated({ bounds, center, zoom });
-		const state = [center.lat.toFixed(6), center.lng.toFixed(6), zoom].join(',');
+		const state = `${this.formatCoords(center)},${zoom}`;
 		history.replaceState(null, '', `#map=${state}`);
 		
 		if (this.props.shown) this.updateEntries(this.props);
@@ -275,6 +291,20 @@ export class MapView extends Component<MapProps, MapState> {
 		this.drawnBefore = draw.map(g => g.entry);
 		this.drawnAtZoom = map.getZoom();
 		
+	}
+	
+	formatCoords(ll: L.LatLng) {
+		return [ll.lat, ll.lng].map(n => n.toFixed(6)).join(', ');
+	}
+	
+	goToCoords(coords: number[]) {
+		const ll = new L.LatLng(coords[0], coords[1]);
+		this.map.setView(ll, Math.max(this.map.getZoom(), 16), { animate: false });
+		this.locationMarker
+			.addTo(this.map)
+			.setLatLng(ll)
+			.setPopupContent(this.formatCoords(ll))
+			.openPopup();
 	}
 	
 }
