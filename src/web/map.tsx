@@ -307,6 +307,15 @@ export class MapView extends Component<MapProps, MapState> {
 			.openPopup();
 	}
 	
+	goToEntry(entry: Entry) {
+		const ll = new L.LatLng(...entry.coords!);
+		this.map.setView(ll, Math.max(this.map.getZoom(), 16), { animate: false });
+		this.updateEntries(this.props);
+		const key = JSON.stringify([entry.id, entry.medical, entry.status, entry.coords, !!this.props.selected?.some(e => e.id == entry.id)]);
+		const marker = this.markers.get(key)!;
+		marker.openPopup();
+	}
+	
 }
 
 export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode?: boolean; noId?: boolean }) {

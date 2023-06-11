@@ -132,8 +132,9 @@ export class App extends Component<{}, AppState> {
 		if (!sessionStorage.sawDisclaimer) this.setState({ drawer: 'disclaimer' });
 	}
 	
-	filterEntries(all: Entry[], filter: AppState['filter']) {
-		return all.filter(entry => (
+	filterEntries(all: Entry[], filter = this.state.filter, selected = this.state.selected) {
+		const sel = new Set(selected?.map(e => e.id) ?? []);
+		return all.filter(entry => sel.has(entry.id) || (
 			entry.coords
 			&& (!filter?.status || filter?.status.includes(entry.status!))
 			&& (!filter?.urgent || filter?.urgent.includes(entry.urgent!))
@@ -240,16 +241,39 @@ export class App extends Component<{}, AppState> {
 	};
 	
 	maybeGoToCoords = () => {
-		const str = this.state.goToCoords;
+		
+		const str = this.state.goToCoords?.trim();
 		if (!str) return;
+		
+		const map = this.mapView.current!;
+		
+		if (str.match(/^#?(\d+)$/)) {
+			const id = str.match(/^#?(\d+)$/)![1];
+			const entry = this.state.entries?.find(e => e.id == id);
+			if (!entry) return alert('Не нашлось');
+			if (!entry.coords) return alert('Нет координат');
+			if (this.state.shown?.some(e => e.id == entry.id)) {
+				map.goToEntry(entry);
+			}
+			else {
+				const selected = [...(this.state.selected || []), entry];
+				const shown = this.filterEntries(this.state.entries!, this.state.filter, selected);
+				this.setState({ shown, selected }, () => {
+					map.goToEntry(entry);
+				});
+			}
+			return;
+		}
+		
 		const coords = str.split(/[,;]/).map(n => Number(n.trim()));
 		if (coords?.length == 2 && coords.every(n => isFinite)) {
-			this.mapView.current!.goToCoords(coords);
+			map.goToCoords(coords);
 			this.setState({ goToCoords: undefined });
 		}
 		else {
 			alert(coords.join(', '));
 		}
+		
 	};
 	
 	hideDisclaimer = () => {
