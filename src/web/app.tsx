@@ -151,7 +151,7 @@ export class App extends Component<{}, AppState> {
 		
 		const entries = list.entries.filter(e => e.coords);
 		
-		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s))];
+		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s && s != 'вывезли' && s != 'решили остаться'))];
 		const urgent = [...new Set(entries.map(e => e.urgent!).filter(s => !!s))];
 		const options = { status, urgent };
 		
