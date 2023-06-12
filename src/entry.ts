@@ -1,3 +1,5 @@
+import { EntryStatus } from './statuses';
+
 export interface Entry {
 	id: string;
 	idx: number;
@@ -7,7 +9,7 @@ export interface Entry {
 	rescued?: boolean;
 	medical?: boolean;
 	urgent?: string;
-	status?: string;
+	status: EntryStatus;
 	address?: string;
 	addressRu?: string;
 	city?: string;

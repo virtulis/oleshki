@@ -1,10 +1,9 @@
 import { sheets, sheets_v4 } from '@googleapis/sheets';
-import { GoogleAuth } from 'google-auth-library';
 import { config } from './common.js';
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import { Entry, EntryList } from './entry';
+import { mkdir, writeFile } from 'fs/promises';
+import { Entry, EntryList } from './entry.js';
 import dayjs from 'dayjs';
-import Schema$Spreadsheet = sheets_v4.Schema$Spreadsheet;
+import { allStatuses, EntryStatus } from './statuses.js';
 import Schema$CellData = sheets_v4.Schema$CellData;
 
 await mkdir('data/history', { recursive: true });
@@ -62,14 +61,18 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		const coords = llMatch ? [llMatch[1], llMatch[2]].map(s => Number(s.trim())) : undefined;
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
 		const etc = Object.fromEntries(verbatim.map(k => [k, val(row.values![cols[k]])]).filter(r => !!r[1]));
-		const status = val(row.values![cols.status])?.toLowerCase();
+		let status = val(row.values![cols.status])?.toLowerCase() as EntryStatus;
 		const urgent = val(row.values![cols.urgent])?.toLowerCase();
 		
-		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), val(row.values![cols.coords]));
+		if (status as string == 'требуется евакуация') status = 'требуется эвакуация';
+		if (status as string == 'спасатели уже работали, нет данных о статусе') status = 'была эвакуация, нет актуального статуса';
+		
+		if (coords && !allStatuses.includes(status)) console.log('строка', i + 1, 'ID', val(row.values![0]), 'неизв статус =', status);
+		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), 'координаты? =', val(row.values![cols.coords]));
 		
 		let id = val(row.values![0]);
 		if (!id || !id.match(/^\w+$/)) {
-			console.log('строка', i + 1, 'ID??? =', id)
+			console.log('строка', i + 1, 'ID??? =', id);
 			id = `R${i + 1}`;
 		}
 		

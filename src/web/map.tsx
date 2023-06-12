@@ -4,6 +4,7 @@ import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
 import 'leaflet.locatecontrol';
 import { IconColor, icons, locationIcon } from './markers';
+import { statusColors, VisibleStatus } from '../statuses';
 
 interface MapProps {
 	entries?: Entry[];
@@ -191,11 +192,7 @@ export class MapView extends Component<MapProps, MapState> {
 				: selected?.[selected?.length - 1]?.id == entry.id ? 'yellow-b'
 				: 'yellow'
 			)
-			: entry.uncertain ? 'violet'
-			: entry.medical ? 'red'
-			: entry.rescued ? 'green'
-			: entry.remain ? 'teal'
-			: 'blue'
+			: statusColors[entry.status as VisibleStatus] ?? 'grey'
 		);
 		
 		const within: Group[] = shown!
@@ -364,7 +361,7 @@ export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode
 		<div className="id">
 			{!noId && <strong>#{entry.id}</strong>}
 			{/*{entry.urgent ? <strong>{!noId && ' - '}{entry.urgent}</strong> : ''}*/}
-			{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
+			{entry.status ? <em> - {entry.status}</em> : ''}
 			{'\n'}
 		</div>
 		<div className="people">

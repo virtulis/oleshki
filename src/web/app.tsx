@@ -5,6 +5,8 @@ import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
 import * as Sentry from '@sentry/react';
+import { defaultStatuses, EntryStatus, optionalStatuses } from '../statuses';
+import { isIn } from '../util';
 
 Sentry.init({
 	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
@@ -19,16 +21,15 @@ interface AppState {
 	selecting?: boolean;
 	done?: number;
 	noPos?: number;
-	options?: {
-		status?: string[];
-		urgent?: string[];
-	};
+	// options?: {
+	// 	status?: string[];
+	// 	// urgent?: string[];
+	// };
 	filter?: {
-		status?: string[];
-		urgent?: string[];
+		only?: EntryStatus[];
+		also?: EntryStatus[];
+		// urgent?: string[];
 		animals?: boolean;
-		remain?: boolean;
-		rescued?: boolean;
 	};
 	mapState?: MapViewState;
 	goToCoords?: string;
@@ -53,7 +54,7 @@ export class App extends Component<{}, AppState> {
 			entries,
 			done,
 			noPos,
-			options,
+			// options,
 			filter,
 			clownMode,
 			selecting,
@@ -68,9 +69,9 @@ export class App extends Component<{}, AppState> {
 			this.setState({ filter, shown });
 		};
 		const filterCount = (
-			(filter?.status && Object.values(filter.status).filter(b => b).length || 0)
-			+ (filter?.urgent && Object.values(filter.urgent).filter(b => b).length || 0)
-			+ Number(!!filter?.animals)
+			(filter?.only && Object.values(filter.only).filter(b => b).length || 0)
+			// + (filter?.urgent && Object.values(filter.urgent).filter(b => b).length || 0)
+			+ Number(!!filter?.animals) + Number(!!filter?.remain) + Number(!!filter?.rescued)
 		);
 		return <div className="app">
 			<div className="info">
@@ -79,7 +80,7 @@ export class App extends Component<{}, AppState> {
 					<div><a href="/in_search.html">Пропавшие ≡</a></div>
 				</div>
 				<div className="counts">{shown?.length}/{entries?.length}</div>
-				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
 				<div className="actions">
 					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
 					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
@@ -113,7 +114,7 @@ export class App extends Component<{}, AppState> {
 				ref={this.mapView}
 			/>
 			{!!drawer && <div className="drawer">
-				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} options={options} />}
+				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
 				{drawer == 'disclaimer' && <div className="disclaimer">
 					<span className="icon">⚠️</span>
 					<div>
@@ -136,11 +137,9 @@ export class App extends Component<{}, AppState> {
 		const sel = new Set(selected?.map(e => e.id) ?? []);
 		return all.filter(entry => sel.has(entry.id) || (
 			entry.coords
-			&& (!filter?.status || filter?.status.includes(entry.status!))
-			&& (!filter?.urgent || filter?.urgent.includes(entry.urgent!))
+			&& (!filter?.only || filter?.only.includes(entry.status!))
+			&& (isIn(entry.status, defaultStatuses) || filter?.also?.includes(entry.status))
 			&& (!filter?.animals || !!entry.animals)
-			&& (!entry.remain || filter?.remain)
-			&& (!entry.rescued || filter?.rescued)
 		));
 	}
 	
@@ -152,14 +151,10 @@ export class App extends Component<{}, AppState> {
 		
 		const entries = list.entries.filter(e => e.coords);
 		
-		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s && s != 'вывезли' && s != 'решили остаться, запроса нет'))];
-		const urgent = [...new Set(entries.map(e => e.urgent!).filter(s => !!s))];
-		const options = { status, urgent };
-		
 		const noPos = list.entries.filter(e => !e.coords).length;
 		const shown = this.filterEntries(list.entries, this.state.filter);
 		
-		this.setState({ updated, entries, done, noPos, shown, options });
+		this.setState({ updated, entries, done, noPos, shown });
 		
 	};
 	
@@ -284,13 +279,12 @@ export class App extends Component<{}, AppState> {
 	
 }
 
-function FilterConfig({ filter, setFilter, options }: {
+function FilterConfig({ filter, setFilter }: {
 	filter: AppState['filter'];
 	setFilter: (filter: AppState['filter']) => void;
-	options: AppState['options'];
 }) {
 	
-	const check = (opt: string, dim: 'status' | 'urgent', val: boolean) => {
+	const check = (opt: string, dim: 'only' | 'also', val: boolean) => {
 		const arr = filter?.[dim];
 		const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
 		const upd = { ...filter, [dim]: res?.length ? res : undefined };
@@ -298,26 +292,25 @@ function FilterConfig({ filter, setFilter, options }: {
 	};
 	
 	return <div className="filters">
-		{(['status'] as const).map(dim => <div className="filter-group" key={dim}>
-			{options?.[dim]?.map(opt => <label key={opt}>
-				<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
+		<div className="filter-group">
+			<small>показать только:</small>
+			{defaultStatuses?.map(opt => <label key={opt}>
+				<input type="checkbox" checked={!!filter?.only?.includes(opt)} onChange={e => check(opt, 'only', e.currentTarget.checked)} />
 				<span>{opt}</span>
 			</label>)}
-		</div>)}
+		</div>
 		<div className="filter-group">
+			<small>показать также:</small>
+			{optionalStatuses?.map(opt => <label key={opt}>
+				<input type="checkbox" checked={!!filter?.also?.includes(opt)} onChange={e => check(opt, 'also', e.currentTarget.checked)} />
+				<span>{opt}</span>
+			</label>)}
+		</div>
+		<div className="filter-group">
+			<small>фильтры:</small>
 			<label>
 				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
 				<span>животные</span>
-			</label>
-		</div>
-		<div className="filter-group">
-			<label>
-				<input type="checkbox" checked={!!filter?.remain} onChange={e => setFilter({ ...filter, remain: e.currentTarget.checked })} />
-				<span>решили остаться</span>
-			</label>
-			<label>
-				<input type="checkbox" checked={!!filter?.rescued} onChange={e => setFilter({ ...filter, rescued: e.currentTarget.checked })} />
-				<span>эвакуированные</span>
 			</label>
 		</div>
 	</div>;
