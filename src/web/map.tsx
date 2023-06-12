@@ -252,7 +252,7 @@ export class MapView extends Component<MapProps, MapState> {
 		do {
 			if (iter++ > 10) break;
 			fixed = 0;
-			for (const group of draw) {
+			for (const group of draw.slice().reverse()) {
 				for (const other of draw) {
 					if (group == other) continue;
 					const dist = Math.ceil(group.point.distanceTo(other.point));
