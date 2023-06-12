@@ -3,8 +3,9 @@ import { config } from './common.js';
 import { mkdir, writeFile } from 'fs/promises';
 import { Entry, EntryList } from './entry.js';
 import dayjs from 'dayjs';
-import { allStatuses, EntryStatus } from './statuses.js';
+import { allStatuses, EntryStatus, hiddenStatuses } from './statuses.js';
 import Schema$CellData = sheets_v4.Schema$CellData;
+import { isIn } from './util.js';
 
 await mkdir('data/history', { recursive: true });
 const fn = 'data/sheet.json';
@@ -56,7 +57,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	};
 	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details'] as const;
 	
-	let entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
+	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/(\d+\.\d+)[,; ]\s*(\d+\.\d+)/);
 		const coords = llMatch ? [llMatch[1], llMatch[2]].map(s => Number(s.trim())) : undefined;
 		const allData = Object.fromEntries(row.values!.map((cd, i) => [columns[i], val(cd)]));
@@ -67,8 +68,10 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		if (status as string == 'требуется евакуация') status = 'требуется эвакуация';
 		if (status as string == 'спасатели уже работали, нет данных о статусе') status = 'была эвакуация, нет актуального статуса';
 		
-		if (coords && !allStatuses.includes(status)) console.log('строка', i + 1, 'ID', val(row.values![0]), 'неизв статус =', status);
-		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), 'координаты? =', val(row.values![cols.coords]));
+		if (isIn(status, hiddenStatuses)) return null;
+		
+		if (coords && !allStatuses.includes(status)) console.log('строка', i + 1, 'ID', val(row.values![0]), ':', 'неизв статус =', status);
+		if (val(row.values![cols.coords]) && !coords) console.log('строка', i + 1, 'ID', val(row.values![0]), status, ':', 'координаты? =', val(row.values![cols.coords]));
 		
 		let id = val(row.values![0]);
 		if (!id || !id.match(/^\w+$/)) {
@@ -89,11 +92,9 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			rescued: status == 'вывезли',
 			data: allData,
 		};
-	}).filter(row => row.coords || row.address || row.contact || row.details);
+	}).filter(row => row && (row.coords || row.address || row.contact || row.details)) as Entry[];
 	
 	const done = entries.filter(e => e.status == 'вывезли').length;
-	const skip = ['приплюсовали', 'дубль', 'пустая строка'];
-	entries = entries.filter(e => !skip.includes(e.status!));
 	
 	const list: EntryList = {
 		updated: dayjs().format(),
