@@ -363,7 +363,7 @@ export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode
 	return <div className="entry">
 		<div className="id">
 			{!noId && <strong>#{entry.id}</strong>}
-			{entry.urgent ? <strong>{!noId && ' - '}{entry.urgent}</strong> : ''}
+			{/*{entry.urgent ? <strong>{!noId && ' - '}{entry.urgent}</strong> : ''}*/}
 			{entry.status && entry.status != 'добавлено' ? <em> - {entry.status}</em> : ''}
 			{'\n'}
 		</div>

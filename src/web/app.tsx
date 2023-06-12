@@ -187,10 +187,11 @@ export class App extends Component<{}, AppState> {
 		const list = this.getSelected();
 		if (!list?.length) return alert('Ничего не выбрано');
 		
-		const header = ['ID', 'Срочно', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
+		const header = ['ID', 'Статус', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
 		const rows = list.map(e => [
 			e.id,
-			e.urgent,
+			// e.urgent,
+			e.status,
 			e.people,
 			e.animals,
 			e.address,
@@ -220,7 +221,7 @@ export class App extends Component<{}, AppState> {
 		const text = list.map(e => {
 			const addr = !clownMode ? e.address : e.addressRu ?? e.address?.split(' / ')[0];
 			return [
-				!!e.urgent && `❗ ${e.urgent}`,
+				// !!e.urgent && `❗ ${e.urgent}`,
 				`👥 ${e.people ?? '?'}${e.animals ? ` + 🐾 ${e.animals}` : ''}`,
 				addr && `🏠 ${addr}`,
 				e.coords && `🌐 ${e.coords?.join(', ')}`,
