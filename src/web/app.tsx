@@ -152,7 +152,7 @@ export class App extends Component<{}, AppState> {
 		
 		const entries = list.entries.filter(e => e.coords);
 		
-		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s && s != 'вывезли' && s != 'решили остаться'))];
+		const status = [...new Set(entries.map(e => e.status!).filter(s => !!s && s != 'вывезли' && s != 'решили остаться, запроса нет'))];
 		const urgent = [...new Set(entries.map(e => e.urgent!).filter(s => !!s))];
 		const options = { status, urgent };
 		
@@ -297,7 +297,7 @@ function FilterConfig({ filter, setFilter, options }: {
 	};
 	
 	return <div className="filters">
-		{(['urgent', 'status'] as const).map(dim => <div className="filter-group" key={dim}>
+		{(['status'] as const).map(dim => <div className="filter-group" key={dim}>
 			{options?.[dim]?.map(opt => <label key={opt}>
 				<input type="checkbox" checked={!!filter?.[dim]?.includes(opt)} onChange={e => check(opt, dim, e.currentTarget.checked)} />
 				<span>{opt}</span>
