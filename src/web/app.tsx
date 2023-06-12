@@ -71,7 +71,7 @@ export class App extends Component<{}, AppState> {
 		const filterCount = (
 			(filter?.only && Object.values(filter.only).filter(b => b).length || 0)
 			// + (filter?.urgent && Object.values(filter.urgent).filter(b => b).length || 0)
-			+ Number(!!filter?.animals) + Number(!!filter?.remain) + Number(!!filter?.rescued)
+			+ Number(!!filter?.animals)
 		);
 		return <div className="app">
 			<div className="info">
