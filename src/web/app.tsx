@@ -135,10 +135,13 @@ export class App extends Component<{}, AppState> {
 	
 	filterEntries(all: Entry[], filter = this.state.filter, selected = this.state.selected) {
 		const sel = new Set(selected?.map(e => e.id) ?? []);
+		const include = new Set([...(filter?.only ?? []), ...(filter?.also ?? [])]);
 		return all.filter(entry => sel.has(entry.id) || (
 			entry.coords
-			&& (!filter?.only || filter?.only.includes(entry.status!))
-			&& (isIn(entry.status, defaultStatuses) || filter?.also?.includes(entry.status))
+			&& (
+				(!filter?.only?.length && isIn(entry.status, defaultStatuses))
+				|| include.has(entry.status)
+			)
 			&& (!filter?.animals || !!entry.animals)
 		));
 	}
