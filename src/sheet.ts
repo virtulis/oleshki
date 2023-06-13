@@ -6,6 +6,10 @@ import dayjs from 'dayjs';
 import { allStatuses, EntryStatus, hiddenStatuses } from './statuses.js';
 import Schema$CellData = sheets_v4.Schema$CellData;
 import { isIn } from './util.js';
+import * as child_process from 'child_process';
+import { promisify } from 'util';
+
+const execFile = promisify(child_process.execFile);
 
 await mkdir('data/history', { recursive: true });
 const fn = 'data/sheet.json';
@@ -104,13 +108,17 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		entries,
 	};
 	
-	await writeFile('data/entries.data.json', JSON.stringify(list, null, '\t'));
+	const histFn = `data/history/${dayjs().format()}.json`;
+	const fullJson = JSON.stringify(list, null, '\t');
+	await writeFile('data/entries.data.json', fullJson);
+	await writeFile(histFn, fullJson);
 	
 	entries.forEach(e => e.data = undefined);
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
-	await writeFile(`data/history/${dayjs().format()}.json`, JSON.stringify(list, null, '\t'));
 	
 	console.log(list.updated, entries.length);
+	
+	await execFile('zstd', ['--rm', '-9', histFn]);
 
 }
 
