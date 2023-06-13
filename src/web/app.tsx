@@ -88,10 +88,10 @@ export class App extends Component<{}, AppState> {
 				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
 				<div className="actions">
 					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>{t('Фильтры')} ({filterCount})</a>
-					{/*{!selecting && <a onClick={() => this.setState({ selecting: true })}>{t('Выделить')}</a>}*/}
-					{/*{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - {t('сбросить')}</a>}*/}
-					{/*<a onClick={this.makeCsv}>CSV</a>*/}
-					{/*<a onClick={this.copyListText}>{t('Список')}</a>*/}
+					{!selecting && <a onClick={() => this.setState({ selecting: true })}>{t('Выделить')}</a>}
+					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - {t('сбросить')}</a>}
+					<a onClick={this.makeCsv}>CSV</a>
+					<a onClick={this.copyListText}>{t('Список')}</a>
 				</div>
 				<div className="map-coords">
 					<input
