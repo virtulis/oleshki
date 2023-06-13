@@ -78,7 +78,7 @@ export class App extends Component<{}, AppState> {
 				<div className="link-bar">
 					<div className="links">
 						<a href="/evacuated.html">{t('Эвакуированы')} ≡</a>
-						<a href="/in_search.html">{t('Пропавшие')} ≡</a>
+						<a href="/in_search.html">{t('Общий поиск')} ≡</a>
 					</div>
 					{!clownMode && <div className="links" onClick={this.toggleLanguage}>
 						<a>{language == 'ru' ? 'укр' : 'рус'}</a>
