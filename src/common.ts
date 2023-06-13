@@ -1,9 +1,11 @@
 import { readFile } from 'fs/promises';
+import { Credentials, OAuth2ClientOptions } from 'google-auth-library';
 
 export interface Config {
-	googleApiKey: string;
-	spreadsheetId: string;
-	sheetRange: string;
+    googleApiKey: OAuth2ClientOptions;
+    googleOAuthToken: Credentials;
+    spreadsheetId: string;
+    sheetRange: string;
 }
 
 export const config: Config = JSON.parse(await readFile('config.json', 'utf8'));
