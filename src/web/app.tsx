@@ -7,6 +7,7 @@ import { stringify } from 'csv-stringify/sync';
 import * as Sentry from '@sentry/react';
 import { defaultStatuses, EntryStatus, optionalStatuses } from '../statuses';
 import { isIn } from '../util';
+import { languageConfig, t } from './i18n';
 
 Sentry.init({
 	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
@@ -14,6 +15,7 @@ Sentry.init({
 
 interface AppState {
 	clownMode?: boolean;
+	language: 'ru' | 'uk';
 	updated?: string;
 	entries?: Entry[];
 	shown?: Entry[];
@@ -42,25 +44,23 @@ export class App extends Component<{}, AppState> {
 
 	constructor(props: {}) {
 		super(props);
-		this.state = {
-			clownMode: location.protocol == 'http:',
-		};
+		const clownMode = location.protocol == 'http:';
+		const language = clownMode ? 'ru' : (typeof localStorage == 'object') && localStorage.language || 'ru';
+		this.state = { clownMode, language };
+		languageConfig.language = language;
 	}
 	
 	render() {
 		const {
+			clownMode,
+			language,
 			updated,
 			shown,
 			entries,
-			done,
-			noPos,
-			// options,
 			filter,
-			clownMode,
 			selecting,
 			selected,
 			drawer,
-			mapState,
 			goToCoords,
 		} = this.state;
 		const updTime = updated && dayjs(updated) || null;
@@ -75,18 +75,23 @@ export class App extends Component<{}, AppState> {
 		);
 		return <div className="app">
 			<div className="info">
-				<div className="links">
-					<div><a href="/evacuated.html">Эвакуированы ≡</a></div>
-					<div><a href="/in_search.html">Пропавшие ≡</a></div>
+				<div className="link-bar">
+					<div className="links">
+						<a href="/evacuated.html">{t('Эвакуированы')} ≡</a>
+						<a href="/in_search.html">{t('Пропавшие')} ≡</a>
+					</div>
+					{!clownMode && <div className="links" onClick={this.toggleLanguage}>
+						<a>{language == 'ru' ? 'укр' : 'рус'}</a>
+					</div>}
 				</div>
 				<div className="counts">{shown?.length}/{entries?.length}</div>
 				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
 				<div className="actions">
-					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>Фильтры ({filterCount})</a>
-					{!selecting && <a onClick={() => this.setState({ selecting: true })}>Выделить</a>}
-					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - сбросить</a>}
+					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>{t('Фильтры')} ({filterCount})</a>
+					{!selecting && <a onClick={() => this.setState({ selecting: true })}>{t('Выделить')}</a>}
+					{selecting && <a onClick={() => this.setState({ selecting: false, selected: undefined })}>{selected?.length || 0} - {t('сбросить')}</a>}
 					<a onClick={this.makeCsv}>CSV</a>
-					<a onClick={this.copyListText}>Список</a>
+					<a onClick={this.copyListText}>{t('Список')}</a>
 				</div>
 				<div className="map-coords">
 					<input
@@ -183,7 +188,7 @@ export class App extends Component<{}, AppState> {
 	makeCsv = (e: React.MouseEvent<HTMLAnchorElement>) => {
 	
 		const list = this.getSelected();
-		if (!list?.length) return alert('Ничего не выбрано');
+		if (!list?.length) return alert(t('Ничего не выбрано'));
 		
 		const header = ['ID', 'Статус', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
 		const rows = list.map(e => [
@@ -214,7 +219,7 @@ export class App extends Component<{}, AppState> {
 		const { clownMode } = this.state;
 		
 		const list = this.getSelected();
-		if (!list?.length) return alert('Ничего не выбрано');
+		if (!list?.length) return alert(t('Ничего не выбрано'));
 		
 		const text = list.map(e => {
 			const addr = !clownMode ? e.address : e.addressRu ?? e.address?.split(' / ')[0];
@@ -249,8 +254,8 @@ export class App extends Component<{}, AppState> {
 		if (str.match(/^#?(\d+)$/)) {
 			const id = str.match(/^#?(\d+)$/)![1];
 			const entry = this.state.entries?.find(e => e.id == id);
-			if (!entry) return alert('Не нашлось');
-			if (!entry.coords) return alert('Нет координат');
+			if (!entry) return alert(t('Не нашлось'));
+			if (!entry.coords) return alert(t('Нет координат'));
 			if (this.state.shown?.some(e => e.id == entry.id)) {
 				map.goToEntry(entry);
 			}
@@ -280,6 +285,13 @@ export class App extends Component<{}, AppState> {
 		this.setState({ drawer: undefined });
 	};
 	
+	toggleLanguage = () => {
+		const language = this.state.language == 'ru' ? 'uk' : 'ru';
+		languageConfig.language = language;
+		this.setState({ language });
+		localStorage.language = language;
+	};
+	
 }
 
 function FilterConfig({ filter, setFilter }: {
@@ -296,24 +308,24 @@ function FilterConfig({ filter, setFilter }: {
 	
 	return <div className="filters">
 		<div className="filter-group">
-			<small>показать только:</small>
+			<small>{t('показать только')}:</small>
 			{defaultStatuses?.map(opt => <label key={opt}>
 				<input type="checkbox" checked={!!filter?.only?.includes(opt)} onChange={e => check(opt, 'only', e.currentTarget.checked)} />
-				<span>{opt}</span>
+				<span>{t(opt)}</span>
 			</label>)}
 		</div>
 		<div className="filter-group">
-			<small>показать также:</small>
+			<small>{t('показать также')}:</small>
 			{optionalStatuses?.map(opt => <label key={opt}>
 				<input type="checkbox" checked={!!filter?.also?.includes(opt)} onChange={e => check(opt, 'also', e.currentTarget.checked)} />
-				<span>{opt}</span>
+				<span>{t(opt)}</span>
 			</label>)}
 		</div>
 		<div className="filter-group">
-			<small>фильтры:</small>
+			<small>{t('фильтры')}:</small>
 			<label>
 				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
-				<span>животные</span>
+				<span>{t('животные')}</span>
 			</label>
 		</div>
 	</div>;

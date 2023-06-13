@@ -5,6 +5,7 @@ import { renderToString } from 'react-dom/server';
 import 'leaflet.locatecontrol';
 import { IconColor, icons, locationIcon } from './markers';
 import { statusColors, VisibleStatus } from '../statuses';
+import { t } from './i18n';
 
 interface MapProps {
 	entries?: Entry[];
@@ -65,7 +66,7 @@ export class MapView extends Component<MapProps, MapState> {
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 		});
 		const visicom = new L.TileLayer(`/visicom/2.0.0/planet3/base/{z}/{x}/{y}.png${clownMode ? '?lang=ru' : ''}`, {
-			attribution: '<a href=\'https://api.visicom.ua/\'>Визиком</a>',
+			attribution: `<a href='https://api.visicom.ua/'>${t('Визиком')}</a>`,
 			// subdomains: '123',
 			maxZoom: 19,
 			tms: true,
@@ -226,7 +227,7 @@ export class MapView extends Component<MapProps, MapState> {
 		const thresh = (map.getSize().x + map.getSize().y) / 50;
 		// console.log('w', within.length, 'mg', mustGroup, 'th', thresh);
 		
-		const t = performance.now();
+		// const t = performance.now();
 		for (const group of within) {
 			if (!selSet.has(group.entry.id) && !group.entry.medical && mustGroup > 0 && draw.length && !prio.has(group.entry.id)) {
 				let best = draw[0];
@@ -288,7 +289,7 @@ export class MapView extends Component<MapProps, MapState> {
 			const key = JSON.stringify([entry.id, entry.medical, entry.status, coords, mark]);
 			seen.add(key);
 			const popup = () => renderToString(<div className="popup">
-				{entries.length > 1 && <h2>{entries.length} точек:</h2>}
+				{entries.length > 1 && <h2>{entries.length} {t('точек')}:</h2>}
 				{entries.map(entry => <EntryPopup entry={entry} clownMode={clownMode} />)}
 			</div>);
 			const icon = icons[color][entries.length > 1 ? 'multi' : 'single'];
@@ -361,25 +362,25 @@ export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode
 		<div className="id">
 			{!noId && <strong>#{entry.id}</strong>}
 			{/*{entry.urgent ? <strong>{!noId && ' - '}{entry.urgent}</strong> : ''}*/}
-			{entry.status ? <em> - {entry.status}</em> : ''}
+			{entry.status ? <em> - {t(entry.status)}</em> : ''}
 			{'\n'}
 		</div>
 		<div className="people">
-			<span title="Людей">
+			<span title={t('Людей')}>
 				👥{' '}
 				{entry.people ?? '?'}
 			</span>
-			{!!entry.animals && <span title="Животных">
+			{!!entry.animals && <span title={t('Животных')}>
 				{' + 🐾 '}
 				{entry.animals}
 			</span>}
 			{'\n'}
 		</div>
-		{!!addr && <div title="Адрес">🏠 {addr}{'\n'}</div>}
+		{!!addr && <div title={t('Адрес')}>🏠 {addr}{'\n'}</div>}
 		{/*{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}*/}
-		<div className="Координаты">🌐 {entry.coords?.join(', ')}{'\n'}</div>
-		{!!entry.contact && <div title="Телефон">📞 {entry.contact}{'\n'}</div>}
-		{!!entry.contactInfo && <div title="Контактная информация">💬 {entry.contactInfo}{'\n'}</div>}
-		{!clownMode && !!entry.details && <div title="Детали">ℹ️ {entry.details}{'\n'}</div>}
+		<div className={t('Координаты')}>🌐 {entry.coords?.join(', ')}{'\n'}</div>
+		{!!entry.contact && <div title={t('Телефон')}>📞 {entry.contact}{'\n'}</div>}
+		{!!entry.contactInfo && <div title={t('Контактная информация')}>💬 {entry.contactInfo}{'\n'}</div>}
+		{!clownMode && !!entry.details && <div title={t('Детали')}>ℹ️ {entry.details}{'\n'}</div>}
 	</div>;
 }

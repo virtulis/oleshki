@@ -37,11 +37,16 @@ html, body {
 	.time {
 		margin-left: auto;
 	}
-	.actions {
+	.link-bar {
+		display: flex;
+		gap: 4px;
+		width: 100%;
+		justify-content: space-between;
+		align-items: flex-start;
+	}
+	.links, .actions {
 		display: flex;
 		flex-wrap: wrap;
-		//flex-direction: column;
-		//align-items: flex-start;
 		gap: 4px;
 
 		a {
