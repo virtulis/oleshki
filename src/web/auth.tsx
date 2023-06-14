@@ -20,11 +20,15 @@ export function AuthForm({ state, onChange }: { state: AuthState; onChange: (sta
 		
 		const res = await fetch('data/updated.txt', {
 			headers: {
-				Authorization: `Basic ${btoa(`${user}:${password}`)}`,
+				Authorization: `Basic ${btoa(`${user.trim()}:${password.trim()}`)}`,
 			},
 		});
 		
-		if (res.ok) return onChange({ user, password, valid: true });
+		if (res.ok) return onChange({
+			user: user.trim(),
+			password: password.trim(),
+			valid: true,
+		});
 		
 		if (res.status == 401) return alert(t('Неверный логин или пароль'));
 		
