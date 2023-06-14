@@ -6,6 +6,7 @@ import 'leaflet.locatecontrol';
 import { IconColor, icons, locationIcon } from './markers';
 import { statusColors, VisibleStatus } from '../statuses';
 import { t } from './i18n';
+import { maybe } from '../util.js';
 
 interface MapProps {
 	entries?: Entry[];
@@ -381,6 +382,6 @@ export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode
 		<div className={t('Координаты')}>🌐 {entry.coords?.join(', ')}{'\n'}</div>
 		{!!entry.contact && <div title={t('Телефон')}>📞 {entry.contact}{'\n'}</div>}
 		{!!entry.contactInfo && <div title={t('Контактная информация')}>💬 {entry.contactInfo}{'\n'}</div>}
-		{!clownMode && !!entry.details && <div title={t('Детали')}>ℹ️ {entry.details}{'\n'}</div>}
+		{!clownMode && maybe(entry.details ?? entry.publicDetails, d => <div title={t('Детали')}>ℹ️ {d}{'\n'}</div>)}
 	</div>;
 }

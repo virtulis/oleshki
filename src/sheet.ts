@@ -142,7 +142,6 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		delete e.contact;
 		delete e.contactInfo;
 		delete e.details;
-		delete e.publicDetails; // FIXME
 	});
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
 
