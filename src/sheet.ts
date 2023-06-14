@@ -75,7 +75,8 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		const urgent = val(row.values![cols.urgent])?.toLowerCase();
 
 		if (status as string == 'требуется евакуация') status = 'требуется эвакуация';
-		if (status as string == 'спасатели уже работали, нет данных о статусе') status = 'была эвакуация, нет актуального статуса';
+		if (status as string == 'спасатели уже работали, нет данных о статусе') status = 'была эвакуация, нет актуальных данных';
+		if (status as string == 'была эвакуация, нет актуального статуса') status = 'была эвакуация, нет актуальных данных';
 
 		if (isIn(status, hiddenStatuses)) return null;
 

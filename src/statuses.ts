@@ -8,7 +8,7 @@ export const urgentStatuses = [
 ] as const;
 
 export const noDataStatuses = [
-	'была эвакуация, нет актуального статуса',
+	'была эвакуация, нет актуальных данных',
 	'нет данных об эвакуации',
 ] as const;
 
