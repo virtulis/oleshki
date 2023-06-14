@@ -42,7 +42,7 @@ self.addEventListener('fetch', async (ev: any) => {
 			|| url.pathname.endsWith('.html')
 		) {
 			url.searchParams.set('t', Date.now());
-			const fr = fetch(url).then(async res => {
+			const fr = fetch(url, { headers: req.headers }).then(async res => {
 				if (res.ok) await cache.put(req, res.clone());
 				return res;
 			}).catch(e => {
