@@ -60,10 +60,11 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		contactInfo: columns.findIndex(s => s.includes('Контакт для связи')),
 		animals: columns.findIndex(s => s.includes('ство жив')),
 		details: columns.findIndex(s => s.includes('Другие комм')),
+		publicDetails: columns.findIndex(s => s.includes('комментарий на карту')),
 		status: columns.findIndex(s => s.includes('статус')),
 		urgent: columns.findIndex(s => s.includes('Срочность')),
 	};
-	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details'] as const;
+	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'publicDetails'] as const;
 
 	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![cols.coords])?.match(/(\d+\.\d+)[,; ]\s*(\d+\.\d+)/);

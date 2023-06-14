@@ -49,8 +49,8 @@ self.addEventListener('fetch', async (ev: any) => {
 				console.error(e);
 				return null;
 			});
-			const res = await Promise.race([fr, sleep(2000)]);
-			if (res?.ok) return res;
+			const res = await Promise.race([fr, sleep(5000)]);
+			if (res?.ok || res?.status == 401 || res?.status == 403) return res;
 		}
 		
 		return ex ?? fetch(req);

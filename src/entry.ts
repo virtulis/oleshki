@@ -14,6 +14,7 @@ export interface Entry {
 	addressRu?: string;
 	city?: string;
 	details?: string;
+	publicDetails?: string;
 	people?: string;
 	contact?: string;
 	contactInfo?: string;
