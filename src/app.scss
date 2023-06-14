@@ -10,6 +10,10 @@ html, body {
 	height: 100%;
 }
 
+a {
+	text-decoration: underline;
+}
+
 .app {
 	height: 100vh;
 	height: 100svh;
@@ -50,7 +54,8 @@ html, body {
 		gap: 4px;
 
 		a {
-			text-decoration: underline;
+			text-decoration: none;
+			color: black;
 			cursor: pointer;
 			border: 1px solid black;
 			display: inline-block;
@@ -60,6 +65,10 @@ html, body {
 		.mobile-toggle {
 			display: none;
 		}
+	}
+	.links.right {
+		justify-content: flex-end;
+		align-content: flex-end;
 	}
 
 	.map-coords input {
@@ -165,5 +174,18 @@ html, body {
 	}
 	button {
 		margin-left: auto;
+	}
+}
+
+.auth {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 8px;
+	gap: 8px;
+
+	label {
+		display: flex;
+		flex-direction: column;
 	}
 }

@@ -5,9 +5,11 @@ import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
 import * as Sentry from '@sentry/react';
-import { defaultStatuses, EntryStatus, optionalStatuses } from '../statuses';
-import { isIn } from '../util';
+import { defaultStatuses, EntryStatus } from '../statuses';
+import { isIn, maybe } from '../util';
 import { languageConfig, t } from './i18n';
+import { AuthForm, AuthState } from './auth.js';
+import { FilterConfig, FilterState } from './filters.js';
 
 Sentry.init({
 	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
@@ -23,19 +25,11 @@ interface AppState {
 	selecting?: boolean;
 	done?: number;
 	noPos?: number;
-	// options?: {
-	// 	status?: string[];
-	// 	// urgent?: string[];
-	// };
-	filter?: {
-		only?: EntryStatus[];
-		also?: EntryStatus[];
-		// urgent?: string[];
-		animals?: boolean;
-	};
+	filter?: FilterState;
 	mapState?: MapViewState;
 	goToCoords?: string;
-	drawer?: 'filters' | 'disclaimer';
+	drawer?: 'filters' | 'disclaimer' | 'auth';
+	auth: AuthState;
 }
 
 export class App extends Component<{}, AppState> {
@@ -46,7 +40,8 @@ export class App extends Component<{}, AppState> {
 		super(props);
 		const clownMode = location.protocol == 'http:';
 		const language = clownMode ? 'ru' : (typeof localStorage == 'object') && localStorage.language || 'ru';
-		this.state = { clownMode, language };
+		const auth: AuthState = maybe(localStorage.auth, JSON.parse) ?? {};
+		this.state = { clownMode, language, auth };
 		languageConfig.language = language;
 	}
 	
@@ -62,6 +57,7 @@ export class App extends Component<{}, AppState> {
 			selected,
 			drawer,
 			goToCoords,
+			auth,
 		} = this.state;
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
@@ -80,8 +76,9 @@ export class App extends Component<{}, AppState> {
 						<a href="/evacuated.html">{t('Эвакуированы')} ≡</a>
 						<a href="/in_search.html">{t('Общий поиск')} ≡</a>
 					</div>
-					{!clownMode && <div className="links" onClick={this.toggleLanguage}>
-						<a>{language == 'ru' ? 'укр' : 'рус'}</a>
+					{!clownMode && <div className="links right">
+						<a onClick={this.toggleLanguage}>{language == 'ru' ? 'укр' : 'рус'}</a>
+						<a onClick={() => this.setState({ drawer: drawer == 'auth' ? undefined : 'auth' })}>{auth.valid ? '🔑' : '🔒'}</a>
 					</div>}
 				</div>
 				<div className="counts">{shown?.length}/{entries?.length}</div>
@@ -128,6 +125,7 @@ export class App extends Component<{}, AppState> {
 					</div>
 					<button onClick={this.hideDisclaimer}>OK</button>
 				</div>}
+				{drawer == 'auth' && <AuthForm key={String(!!auth.valid)} state={auth} onChange={this.updateAuth} />}
 			</div>}
 		</div>;
 	}
@@ -135,7 +133,7 @@ export class App extends Component<{}, AppState> {
 	componentDidMount() {
 		this.reloadEntries();
 		setInterval(this.reloadEntries, 20000);
-		if (!sessionStorage.sawDisclaimer) this.setState({ drawer: 'disclaimer' });
+		if (!localStorage.sawDisclaimer && !sessionStorage.sawDisclaimer) this.setState({ drawer: 'disclaimer' });
 	}
 	
 	filterEntries(all: Entry[], filter = this.state.filter, selected = this.state.selected) {
@@ -153,7 +151,20 @@ export class App extends Component<{}, AppState> {
 	
 	reloadEntries = async () => {
 	
-		const list = (await fetch('/data/entries.json').then(res => res.json())) as EntryList;
+		const { auth } = this.state;
+		const src = auth.valid ? '/data/entries.auth.json' : '/data/entries.json';
+		const res = await fetch(src, {
+			headers: auth.valid ? {
+				Authorization: `Basic ${btoa(`${auth.user}:${auth.password}`)}`,
+			} : {},
+		});
+		
+		if (res.status == 401 && auth.valid) {
+			this.setState({ auth: { ...auth, valid: false } }, () => this.reloadEntries);
+			return;
+		}
+		
+		const list = await res.json() as EntryList;
 		
 		const { updated, done } = list;
 		
@@ -281,7 +292,7 @@ export class App extends Component<{}, AppState> {
 	};
 	
 	hideDisclaimer = () => {
-		sessionStorage.sawDisclaimer = 'yes';
+		localStorage.sawDisclaimer = 'yes';
 		this.setState({ drawer: undefined });
 	};
 	
@@ -292,43 +303,11 @@ export class App extends Component<{}, AppState> {
 		localStorage.language = language;
 	};
 	
-}
-
-function FilterConfig({ filter, setFilter }: {
-	filter: AppState['filter'];
-	setFilter: (filter: AppState['filter']) => void;
-}) {
-	
-	const check = (opt: string, dim: 'only' | 'also', val: boolean) => {
-		const arr = filter?.[dim];
-		const res = val ? [...(arr ?? []), opt] : arr?.filter(e => e != opt);
-		const upd = { ...filter, [dim]: res?.length ? res : undefined };
-		setFilter(upd);
+	updateAuth = (auth: AuthState) => {
+		this.setState({ auth }, this.reloadEntries);
+		localStorage.auth = JSON.stringify(auth);
 	};
 	
-	return <div className="filters">
-		<div className="filter-group">
-			<small>{t('показать только')}:</small>
-			{defaultStatuses?.map(opt => <label key={opt}>
-				<input type="checkbox" checked={!!filter?.only?.includes(opt)} onChange={e => check(opt, 'only', e.currentTarget.checked)} />
-				<span>{t(opt)}</span>
-			</label>)}
-		</div>
-		<div className="filter-group">
-			<small>{t('показать также')}:</small>
-			{optionalStatuses?.map(opt => <label key={opt}>
-				<input type="checkbox" checked={!!filter?.also?.includes(opt)} onChange={e => check(opt, 'also', e.currentTarget.checked)} />
-				<span>{t(opt)}</span>
-			</label>)}
-		</div>
-		<div className="filter-group">
-			<small>{t('фильтры')}:</small>
-			<label>
-				<input type="checkbox" checked={!!filter?.animals} onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })} />
-				<span>{t('животные')}</span>
-			</label>
-		</div>
-	</div>;
 }
 
 

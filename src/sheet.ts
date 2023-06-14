@@ -37,6 +37,8 @@ export async function fetchSheet() {
 
 export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 
+	const updated = dayjs().format();
+
 	const rowData = data.sheets![0].data![0].rowData!;
 	const columns = rowData[0]!.values!.map(
 		(cd, i) => cd.effectiveValue?.stringValue?.replace(/\s+/g, ' ') ?? String(i)
@@ -101,26 +103,37 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	}).filter(row => row && (row.coords || row.address || row.contact || row.details)) as Entry[];
 
 	const done = entries.filter(e => e.status == 'вывезли').length;
-
+	
 	const list: EntryList = {
-		updated: dayjs().format(),
+		updated,
 		done,
 		columns,
 		mapping: cols,
 		entries,
 	};
 
-	const histFn = `data/history/${dayjs().format()}.json`;
+	const histFn = `data/history/${updated}.json`;
 	const fullJson = JSON.stringify(list, null, '\t');
 	await writeFile('data/entries.data.json', fullJson);
 	await writeFile(histFn, fullJson);
+	
+	entries.forEach(e => {
+		delete e.data;
+	});
+	await writeFile('data/entries.auth.json', JSON.stringify(list, null, '\t'));
 
-	entries.forEach(e => e.data = undefined);
+	entries.forEach(e => {
+		delete e.contact;
+		delete e.contactInfo;
+		delete e.details;
+	});
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
 
 	console.log(list.updated, entries.length);
 
 	await execFile('zstd', ['--rm', '-9', histFn]);
+	
+	await writeFile('data/updated.txt', updated);
 
 }
 
@@ -128,7 +141,3 @@ if (process.argv.includes('fetch')) {
 	const data = await fetchSheet();
 	await parseSheet(data);
 }
-// else if (process.argv.includes('parse')) {
-// 	const data = JSON.parse(await readFile(fn, 'utf8'));
-// 	await parseSheet(data);
-// }
