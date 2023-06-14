@@ -1,4 +1,5 @@
 import { EntryStatus } from './statuses';
+import { Maybe } from './util.js';
 
 export interface Entry {
 	id: string;
@@ -26,6 +27,6 @@ export interface EntryList {
 	updated: string;
 	done: number;
 	entries: Entry[];
-	columns?: string[];
-	mapping?: Record<string, number>;
+	columns: string[];
+	mapping: Partial<Record<keyof Entry, Maybe<number>>>;
 }
