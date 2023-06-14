@@ -5,10 +5,11 @@ import { Entry, EntryList } from './entry.js';
 import dayjs from 'dayjs';
 import { allStatuses, EntryStatus, hiddenStatuses } from './statuses.js';
 import Schema$CellData = sheets_v4.Schema$CellData;
-import { isIn, isNone, isSome } from './util.js';
+import { isIn, isNone, isSome, Maybe } from './util.js';
 import * as child_process from 'child_process';
 import { promisify } from 'util';
 import { OAuth2Client } from 'google-auth-library';
+import { stringify } from 'csv-stringify/sync';
 
 const execFile = promisify(child_process.execFile);
 
@@ -218,6 +219,58 @@ async function cleanUpDetails() {
 	
 }
 
+async function dumpNames() {
+	
+	const list: EntryList = JSON.parse(await readFile('data/entries.data.json', 'utf-8'));
+	
+	type Row = {
+		entry: Maybe<string>;
+		field: Maybe<string>;
+		name1: Maybe<string>;
+		name2: Maybe<string>;
+		name3: Maybe<string>;
+		year: Maybe<string>;
+	};
+	const output: Row[] = [];
+	
+	for (const entry of list.entries) {
+		
+		console.log('----', entry.id);
+		
+		for (const field of ['contact', 'contactInfo', 'details'] as const) {
+			
+			const src = entry[field];
+			if (!src?.trim()) continue;
+			console.log(src);
+			
+			const matches = src.matchAll(
+				/((?<!\p{Alpha})\p{Lu}\p{Ll}+) +(\p{Lu}\.|\p{Lu}\p{Ll}{3,}) *(\p{Lu}\.|\p{Lu}\p{Ll}{3,})?[ ,)(]+(\d{1,2}[,.]\d{1,2}[,.]\d{4}|19\d{2}|2[012]\d{2}|\d{1,3} *[лрг+])?/gu
+			);
+			// console.log([...matches]);
+			
+			for (const match of matches) {
+				const [full, name1, name2, name3, year] = [...match];
+				const row: Row = {
+					entry: entry.id,
+					field,
+					name1,
+					name2,
+					name3,
+					year,
+				};
+				output.push(row);
+				console.log(JSON.stringify(row));
+			}
+			
+		}
+		
+	}
+	
+	await writeFile('data/names.json', JSON.stringify(output, null, '\t'));
+	await writeFile('data/names.csv', stringify(output, { header: true }));
+	
+}
+
 if (process.argv.includes('fetch')) {
 	const data = await fetchSheet();
 	await parseSheet(data);
@@ -225,4 +278,7 @@ if (process.argv.includes('fetch')) {
 
 if (process.argv.includes('cleanup')) {
 	await cleanUpDetails();
+}
+if (process.argv.includes('dumpNames')) {
+	await dumpNames();
 }
