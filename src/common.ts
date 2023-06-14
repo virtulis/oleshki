@@ -5,6 +5,7 @@ export interface Config {
     googleApiKey: OAuth2ClientOptions;
     googleOAuthToken: Credentials;
     spreadsheetId: string;
+	sheetId: number;
     sheetRange: string;
 }
 
