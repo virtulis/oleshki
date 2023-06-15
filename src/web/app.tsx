@@ -61,7 +61,7 @@ export class App extends Component<{}, AppState> {
 			goToCoords,
 			auth,
 		} = this.state;
-		console.log(statuses);
+		
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
 			const shown = this.filterEntries(entries!, filter);
@@ -196,7 +196,6 @@ export class App extends Component<{}, AppState> {
 		this.setState({ selected });
 	};
 	toggleSelected = (entry: Entry) => {
-		console.log('toggleSelected');
 		const ex = this.state.selected ?? [];
 		const selected = ex.some(e => e.id == entry.id) ? ex.filter(e => e.id != entry.id) : [...ex, entry];
 		this.setState({ selected });
