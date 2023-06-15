@@ -73,12 +73,20 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		urgent: findCol('Срочность'),
 	};
 	
+	console.log('---');
+	
+	for (const [key, idx] of Object.entries(cols)) {
+		console.log(key.padEnd(14), String(idx).padStart(4), columns[idx!]);
+	}
+	
 	const coordCol = cols.coords;
 	const statusCol = cols.status;
 	if (!isSome(coordCol)) throw new Error('No coords column');
 	if (!isSome(statusCol)) throw new Error('No status column');
 	
 	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'publicDetails'] as const;
+	
+	console.log('---');
 
 	const entries = rowData.slice(1).filter(row => row.values?.slice(1)?.some(cd => !!val(cd))).map((row, i) => {
 		const llMatch = val(row.values![coordCol])?.match(/(\d+\.\d+)[,; ]\s*(\d+\.\d+)/);
@@ -144,7 +152,8 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		delete e.details;
 	});
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
-
+	
+	console.log('---');
 	console.log(list.updated, entries.length);
 
 	await execFile('zstd', ['--rm', '-9', histFn]);
