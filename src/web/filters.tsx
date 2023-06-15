@@ -1,5 +1,5 @@
 import { t } from './i18n.js';
-import { defaultStatuses, EntryStatus, optionalStatuses } from '../statuses.js';
+import { defaultStatuses, EntryStatus, optionalStatuses, StatusCounts } from '../statuses.js';
 import { Maybe } from '../util.js';
 
 export interface FilterState {
@@ -9,9 +9,10 @@ export interface FilterState {
 	animals?: boolean;
 }
 
-export function FilterConfig({ filter, setFilter }: {
+export function FilterConfig({ filter, setFilter, statuses }: {
 	filter: Maybe<FilterState>;
 	setFilter: (filter: FilterState) => void;
+	statuses?: StatusCounts;
 }) {
 	
 	const check = (opt: string, dim: 'only' | 'also', val: boolean) => {
@@ -24,7 +25,7 @@ export function FilterConfig({ filter, setFilter }: {
 	return <div className="filters">
 		<div className="filter-group">
 			<small>{t('показать только')}:</small>
-			{defaultStatuses?.map(opt => <label key={opt}>
+			{defaultStatuses?.filter(opt => statuses?.[opt]).map(opt => <label key={opt}>
 				<input
 					type="checkbox"
 					checked={!!filter?.only?.includes(opt)}
@@ -35,7 +36,7 @@ export function FilterConfig({ filter, setFilter }: {
 		</div>
 		<div className="filter-group">
 			<small>{t('показать также')}:</small>
-			{optionalStatuses?.map(opt => <label key={opt}>
+			{optionalStatuses?.filter(opt => statuses?.[opt]).map(opt => <label key={opt}>
 				<input
 					type="checkbox"
 					checked={!!filter?.also?.includes(opt)}

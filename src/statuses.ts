@@ -1,5 +1,5 @@
 import { IconColor } from './web/markers';
-import { Icon } from 'leaflet';
+import { Maybe } from './util';
 
 export const urgentStatuses = [
 	'нужна вода и еда',
@@ -10,6 +10,7 @@ export const urgentStatuses = [
 export const noDataStatuses = [
 	'была эвакуация, нет актуальных данных',
 	'нет данных об эвакуации',
+	'частично в списках эвакуированных',
 ] as const;
 
 export const baseStatuses = [
@@ -55,3 +56,5 @@ export const statusColors: Record<VisibleStatus, IconColor> = {
 	'решили остаться, запроса нет': 'teal',
 	
 };
+
+export type StatusCounts = Record<EntryStatus, Maybe<number>>;

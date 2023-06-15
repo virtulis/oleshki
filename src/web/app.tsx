@@ -5,7 +5,7 @@ import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
 import { stringify } from 'csv-stringify/sync';
 import * as Sentry from '@sentry/react';
-import { defaultStatuses, EntryStatus } from '../statuses';
+import { defaultStatuses, StatusCounts } from '../statuses';
 import { isIn, maybe } from '../util';
 import { languageConfig, t } from './i18n';
 import { AuthForm, AuthState } from './auth.js';
@@ -30,6 +30,7 @@ interface AppState {
 	goToCoords?: string;
 	drawer?: 'filters' | 'disclaimer' | 'auth';
 	auth: AuthState;
+	statuses?: StatusCounts;
 }
 
 export class App extends Component<{}, AppState> {
@@ -53,12 +54,14 @@ export class App extends Component<{}, AppState> {
 			shown,
 			entries,
 			filter,
+			statuses,
 			selecting,
 			selected,
 			drawer,
 			goToCoords,
 			auth,
 		} = this.state;
+		console.log(statuses);
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
 			const shown = this.filterEntries(entries!, filter);
@@ -82,7 +85,7 @@ export class App extends Component<{}, AppState> {
 					</div>}
 				</div>
 				<div className="counts">{shown?.length}/{entries?.length}</div>
-				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
+				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} statuses={statuses} />}
 				<div className="actions">
 					
 					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>{t('Фильтры')} ({filterCount})</a>
@@ -121,7 +124,7 @@ export class App extends Component<{}, AppState> {
 				ref={this.mapView}
 			/>
 			{!!drawer && <div className="drawer">
-				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} />}
+				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} statuses={statuses} />}
 				{drawer == 'disclaimer' && <div className="disclaimer">
 					<span className="icon">⚠️</span>
 					<div>
@@ -174,11 +177,13 @@ export class App extends Component<{}, AppState> {
 		const { updated, done } = list;
 		
 		const entries = list.entries.filter(e => e.coords);
+		const statuses = {} as StatusCounts;
+		entries.forEach(e => statuses[e.status] = (statuses[e.status] || 0) + 1);
 		
 		const noPos = list.entries.filter(e => !e.coords).length;
 		const shown = this.filterEntries(list.entries, this.state.filter);
 		
-		this.setState({ updated, entries, done, noPos, shown });
+		this.setState({ updated, entries, done, noPos, shown, statuses });
 		
 	};
 	
