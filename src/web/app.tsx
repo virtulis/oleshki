@@ -79,7 +79,7 @@ export class App extends Component<{}, AppState> {
 				<div className="link-bar">
 					<div className="links">
 						<a href="/evacuated.html">{t('Эвакуированы')} ≡</a>
-						<a href="/in_search.html">{t('Общий поиск')} ≡</a>
+						<a href="https://search.oleshki.kludge.guru">{t('Общий поиск')} ≡</a>
 					</div>
 					{!clownMode && <div className="links right">
 						<a onClick={this.toggleLanguage}>{language == 'ru' ? 'укр' : 'рус'}</a>
@@ -137,7 +137,7 @@ export class App extends Component<{}, AppState> {
 					<span className="icon">⚠️</span>
 					<div>
 						Информация на карте обновляется с задержкой. Некоторые дома уже эвакуированы, но там, где мы не можем получить подтверждение, мы сохраняем метки на карте.<br />
-						См. также списки <a href="/evacuated.html">эвакуированных</a> и <a href="/in_search.html">пропавших</a>.
+						См. также списки <a href="/evacuated.html">эвакуированных</a> и <a href="https://search.oleshki.kludge.guru/">поиск</a>.
 					</div>
 					<button onClick={this.hideDisclaimer}>OK</button>
 				</div>}
