@@ -63,7 +63,6 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	};
 
 	const cols = {
-		city: findCol('Город'),
 		coords: findCol('Координаты'),
 		address: findCol('адрес рус / укр'),
 		addressRu: findCol('адрес по-русски'),
@@ -74,7 +73,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		details: findCol('Другие комм'),
 		publicDetails: findCol('комментарий на карту'),
 		status: findCol('статус'),
-		urgent: findCol('Срочность'),
+		list: findCol('выгрузка'),
 	};
 	
 	console.log('---');
@@ -88,7 +87,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 	if (!isSome(coordCol)) throw new Error('No coords column');
 	if (!isSome(statusCol)) throw new Error('No status column');
 	
-	const verbatim = ['address', 'addressRu', 'city', 'people', 'contact', 'contactInfo', 'animals', 'details', 'publicDetails'] as const;
+	const verbatim = ['address', 'addressRu', 'people', 'contact', 'contactInfo', 'animals', 'details', 'publicDetails', 'list'] as const;
 	
 	console.log('---');
 
@@ -154,6 +153,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 		delete e.contact;
 		delete e.contactInfo;
 		delete e.details;
+		delete e.list;
 	});
 	await writeFile('data/entries.json', JSON.stringify(list, null, '\t'));
 	

@@ -31,6 +31,7 @@ interface AppState {
 	drawer?: 'filters' | 'disclaimer' | 'auth';
 	auth: AuthState;
 	statuses?: StatusCounts;
+	lists?: string[];
 }
 
 export class App extends Component<{}, AppState> {
@@ -54,6 +55,7 @@ export class App extends Component<{}, AppState> {
 			shown,
 			entries,
 			filter,
+			lists,
 			statuses,
 			selecting,
 			selected,
@@ -85,7 +87,12 @@ export class App extends Component<{}, AppState> {
 					</div>}
 				</div>
 				<div className="counts">{shown?.length}/{entries?.length}</div>
-				{drawer != 'filters' && <FilterConfig filter={filter} setFilter={setFilter} statuses={statuses} />}
+				{drawer != 'filters' && <FilterConfig
+					filter={filter}
+					setFilter={setFilter}
+					statuses={statuses}
+					lists={lists}
+				/>}
 				<div className="actions">
 					
 					<a className="mobile-toggle" onClick={() => this.setState({ drawer: drawer == 'filters' ? undefined : 'filters' })}>{t('Фильтры')} ({filterCount})</a>
@@ -146,6 +153,7 @@ export class App extends Component<{}, AppState> {
 	}
 	
 	filterEntries(all: Entry[], filter = this.state.filter, selected = this.state.selected) {
+		console.log(filter?.lists);
 		const sel = new Set(selected?.map(e => e.id) ?? []);
 		const include = new Set([...(filter?.only ?? []), ...(filter?.also ?? [])]);
 		return all.filter(entry => sel.has(entry.id) || (
@@ -153,8 +161,10 @@ export class App extends Component<{}, AppState> {
 			&& (
 				(!filter?.only?.length && isIn(entry.status, defaultStatuses))
 				|| include.has(entry.status)
+				|| (!!filter?.lists?.length && !filter?.only?.length)
 			)
 			&& (!filter?.animals || !!entry.animals)
+			&& (!filter?.lists?.length || !!isIn(entry.list, filter.lists))
 		));
 	}
 
@@ -183,12 +193,17 @@ export class App extends Component<{}, AppState> {
 		
 		const entries = list.entries.filter(e => e.coords);
 		const statuses = {} as StatusCounts;
-		entries.forEach(e => statuses[e.status] = (statuses[e.status] || 0) + 1);
+		const listSet = new Set<string>();
+		entries.forEach(e => {
+			statuses[e.status] = (statuses[e.status] || 0) + 1;
+			if (e.list) listSet.add(e.list);
+		});
+		const lists = [...listSet].sort();
 		
 		const noPos = list.entries.filter(e => !e.coords).length;
 		const shown = this.filterEntries(list.entries, this.state.filter);
 		
-		this.setState({ updated, entries, done, noPos, shown, statuses });
+		this.setState({ updated, entries, done, noPos, shown, statuses, lists });
 		
 	};
 	
