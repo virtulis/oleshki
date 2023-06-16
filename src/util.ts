@@ -24,3 +24,17 @@ export function maybe<IT, RT>(it: IT, action: MaybeCB<IT, RT>): RT | Extract<IT,
 	if (!isSome(it)) return it as Extract<IT, null | undefined>;
 	return action(it);
 }
+
+export function pick<T, K extends keyof T>(obj: T, ...keys: readonly (K | readonly K[])[]): Pick<T, K> {
+	const out: any = {};
+	for (const k of keys.flat(1) as K[]) if (Object.prototype.hasOwnProperty.call(obj, k)) out[k] = obj[k];
+	return out;
+}
+
+export function omit<T, K extends keyof T>(obj: T, ...keys: readonly (K | readonly K[])[]): Omit<T, K> {
+	const out: any = {};
+	const flat = keys.flat(1);
+	for (const k in obj) if (!flat.includes(k as any)) out[k] = obj[k];
+	return out;
+}
+

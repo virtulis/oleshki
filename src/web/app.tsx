@@ -122,6 +122,7 @@ export class App extends Component<{}, AppState> {
 				onSelected={this.selectEntries}
 				toggleSelected={this.toggleSelected}
 				ref={this.mapView}
+				fetchData={this.fetchData}
 			/>
 			{!!drawer && <div className="drawer">
 				{drawer == 'filters' && <FilterConfig filter={filter} setFilter={setFilter} statuses={statuses} />}
@@ -156,17 +157,21 @@ export class App extends Component<{}, AppState> {
 			&& (!filter?.animals || !!entry.animals)
 		));
 	}
-	
-	reloadEntries = async () => {
-	
+
+	fetchData = (src: string) => {
 		const { auth } = this.state;
-		const src = auth.valid ? '/data/entries.auth.json' : '/data/entries.json';
-		const res = await fetch(src, {
+		return fetch(src, {
 			headers: auth.valid ? {
 				Authorization: `Basic ${btoa(`${auth.user}:${auth.password}`)}`,
 			} : {},
 		});
-		
+	};
+
+	reloadEntries = async () => {
+
+		const { auth } = this.state;
+		const res = await this.fetchData(auth.valid ? '/data/entries.auth.json' : '/data/entries.json');
+
 		if (res.status == 401 && auth.valid) {
 			this.setState({ auth: { ...auth, valid: false } }, () => this.reloadEntries);
 			return;

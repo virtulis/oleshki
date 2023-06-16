@@ -17,6 +17,7 @@ interface MapProps {
 	toggleSelected: (entry: Entry) => void;
 	selected?: Entry[];
 	selecting?: boolean;
+	fetchData: (url: string) => Promise<Response>;
 }
 interface MapState {
 
@@ -37,6 +38,8 @@ export class MapView extends Component<MapProps, MapState> {
 	selection?: L.Rectangle;
 	selectionFrom?: L.LatLng;
 	selectedLine?: L.Polyline;
+	layerControl!: L.Control.Layers;
+
 	drawnBefore?: Entry[];
 	drawnAtZoom = 0;
 	
@@ -76,8 +79,8 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
 		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
-		
-		L.control.layers({
+
+		this.layerControl = L.control.layers({
 			OSM: osm,
 			Visicom: visicom,
 		}, clownMode ? {} : {

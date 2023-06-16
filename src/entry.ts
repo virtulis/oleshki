@@ -30,3 +30,34 @@ export interface EntryList {
 	columns: string[];
 	mapping: Partial<Record<keyof Entry, Maybe<number>>>;
 }
+
+export interface DiffEntry {
+	id: string;
+	data: Partial<Record<keyof Entry, any>>;
+	lastChange: Maybe<string>;
+	changed: Partial<Record<keyof Entry, string>>;
+	previous: Partial<Record<keyof Entry, any>>;
+	first: Partial<Record<keyof Entry, any>>;
+}
+
+export const significantEntryFields: (keyof Entry)[] = [
+	'id',
+	// 'idx',
+	'coords',
+	// 'uncertain',
+	// 'remain',
+	// 'rescued',
+	// 'medical',
+	// 'urgent',
+	'status',
+	'address',
+	'addressRu',
+	'city',
+	'details',
+	// 'publicDetails',
+	'people',
+	'contact',
+	'contactInfo',
+	'animals',
+	// 'data',
+];
