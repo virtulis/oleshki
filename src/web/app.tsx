@@ -230,13 +230,14 @@ export class App extends Component<{}, AppState> {
 		const list = this.getSelected();
 		if (!list?.length) return alert(t('Ничего не выбрано'));
 		
-		const header = ['ID', 'Статус', 'Людей', 'Животных', 'Адрес', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
+		const header = ['ID', 'Статус', 'Людей', 'Животных', 'Адрес', 'Город', 'Адрес Р', 'Координаты', 'Телефон', 'Контактная инфа', 'Детали'];
 		const rows = list.map(e => [
 			e.id,
 			// e.urgent,
 			e.status,
 			e.people,
 			e.animals,
+			e.city,
 			e.address,
 			e.addressRu,
 			e.coords?.join(', '),

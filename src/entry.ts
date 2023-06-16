@@ -9,6 +9,7 @@ export interface Entry {
 	status: EntryStatus;
 	address?: string;
 	addressRu?: string;
+	city?: string;
 	details?: string;
 	publicDetails?: string;
 	people?: string;

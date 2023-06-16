@@ -381,7 +381,7 @@ export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode
 			{'\n'}
 		</div>
 		{!!addr && <div title={t('Адрес')}>🏠 {addr}{'\n'}</div>}
-		{/*{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}*/}
+		{!!entry.city && <div title="Город/село">🏢 {entry.city}</div>}
 		<div className={t('Координаты')}>🌐 {entry.coords?.join(', ')}{'\n'}</div>
 		{!!entry.contact && <div title={t('Телефон')}>📞 {entry.contact}{'\n'}</div>}
 		{!!entry.contactInfo && <div title={t('Контактная информация')}>💬 {entry.contactInfo}{'\n'}</div>}
