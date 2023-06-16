@@ -46,7 +46,7 @@ export function FilterConfig({ filter, setFilter, statuses, lists }: {
 				<span>{t(opt)}</span>
 			</label>)}
 		</div>
-		{lists?.length && <div className="filter-group">
+		{!!lists?.length && <div className="filter-group">
 			<small>{t('выгрузка')}:</small>
 			{lists.map(opt => <label key={opt}>
 				<input
