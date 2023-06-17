@@ -9,7 +9,7 @@ import { defaultStatuses, StatusCounts } from '../statuses';
 import { isIn, maybe } from '../util';
 import { languageConfig, t } from './i18n';
 import { AuthForm, AuthState } from './auth.js';
-import { FilterConfig, FilterState } from './filters.js';
+import { defaltFilterState, FilterConfig, FilterState } from './filters.js';
 
 Sentry.init({
 	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
@@ -25,7 +25,7 @@ interface AppState {
 	selecting?: boolean;
 	done?: number;
 	noPos?: number;
-	filter?: FilterState;
+	filter: FilterState;
 	mapState?: MapViewState;
 	goToCoords?: string;
 	drawer?: 'filters' | 'disclaimer' | 'auth';
@@ -43,7 +43,12 @@ export class App extends Component<{}, AppState> {
 		const clownMode = location.protocol == 'http:';
 		const language = clownMode ? 'ru' : (typeof localStorage == 'object') && localStorage.language || 'ru';
 		const auth: AuthState = maybe(localStorage.auth, JSON.parse) ?? {};
-		this.state = { clownMode, language, auth };
+		this.state = {
+			clownMode,
+			language,
+			auth,
+			filter: defaltFilterState,
+		};
 		languageConfig.language = language;
 	}
 	
@@ -70,7 +75,7 @@ export class App extends Component<{}, AppState> {
 			this.setState({ filter, shown });
 		};
 		const filterCount = (
-			(filter?.only && Object.values(filter.only).filter(b => b).length || 0)
+			(filter?.statuses && Object.values(filter.statuses).filter(b => b).length || 0)
 			// + (filter?.urgent && Object.values(filter.urgent).filter(b => b).length || 0)
 			+ Number(!!filter?.animals)
 		);
@@ -153,18 +158,13 @@ export class App extends Component<{}, AppState> {
 	}
 	
 	filterEntries(all: Entry[], filter = this.state.filter, selected = this.state.selected) {
-		console.log(filter?.lists);
+		console.log(filter);
 		const sel = new Set(selected?.map(e => e.id) ?? []);
-		const include = new Set([...(filter?.only ?? []), ...(filter?.also ?? [])]);
-		return all.filter(entry => sel.has(entry.id) || (
-			entry.coords
-			&& (
-				(!filter?.only?.length && isIn(entry.status, defaultStatuses))
-				|| include.has(entry.status)
-				|| (!!filter?.lists?.length && !filter?.only?.length)
-			)
-			&& (!filter?.animals || !!entry.animals)
-			&& (!filter?.lists?.length || !!isIn(entry.list, filter.lists))
+		return all.filter(entry => entry.coords && (
+			sel.has(entry.id)
+			|| (filter?.statuses && isIn(entry.status, filter.statuses))
+			|| (filter?.animals && !!entry.animals)
+			|| (filter?.lists && !!isIn(entry.list, filter.lists))
 		));
 	}
 

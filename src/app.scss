@@ -12,6 +12,7 @@ html, body {
 
 a {
 	text-decoration: underline;
+	cursor: pointer;
 }
 
 .app {
@@ -147,6 +148,24 @@ a {
 	flex-direction: column;
 	padding: 4px 0;
 	gap: 4px;
+
+	label, .group-heading {
+		width: 100%;
+		display: flex;
+		justify-content: stretch;
+		gap: 4px;
+		align-items: flex-start;
+
+		span, small {
+			flex: 1 1 auto;
+		}
+		a {
+			text-decoration: none;
+			display: inline-block;
+			padding: 4px;
+			margin: -4px;
+		}
+	}
 }
 
 .map {
