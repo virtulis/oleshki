@@ -18,7 +18,7 @@ export const baseStatuses = [
 ] as const;
 
 export const successStatuses = ['вывезли'] as const;
-export const noOpStatuses = ['решили остаться, запроса нет'] as const;
+export const noOpStatuses = ['пока остаются, запроса нет'] as const;
 
 export const hiddenStatuses = [
 
@@ -55,7 +55,7 @@ export const statusColors: Record<VisibleStatus, IconColor> = {
 	'частично в списках эвакуированных': 'violet',
 	
 	вывезли: 'green',
-	'решили остаться, запроса нет': 'teal',
+	'пока остаются, запроса нет': 'teal',
 	
 };
 

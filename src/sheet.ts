@@ -122,7 +122,7 @@ export async function parseSheet(data: sheets_v4.Schema$Spreadsheet) {
 			...etc,
 			status,
 			// urgent,
-			remain: status == 'решили остаться, запроса нет',
+			remain: status == 'пока остаются, запроса нет',
 			medical: status == 'медицина, требуются лекарства',
 			uncertain: status?.includes('нет данных'),
 			rescued: status == 'вывезли',
