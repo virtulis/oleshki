@@ -13,6 +13,7 @@ const colors = [
 	'violet',
 	'grey',
 	'black',
+	'pink',
 	
 	'yellow-a',
 	'yellow-b',

@@ -78,7 +78,7 @@ export function FilterConfig({ filter, setFilter, statuses, lists }: {
 					checked={filter.animals}
 					onChange={e => setFilter({ ...filter, animals: e.currentTarget.checked })}
 				/>
-				<span>{t('животные')}</span>
+				<span>{t('люди с животными')}</span>
 				<a title={t('показать только')} onClick={e => showOnly(e, { animals: true })}>○</a>
 			</label>
 		</div>

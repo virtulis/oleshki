@@ -16,6 +16,7 @@ export const noDataStatuses = [
 
 export const baseStatuses = [
 	'актуально',
+	'животные',
 ] as const;
 
 export const successStatuses = ['вывезли'] as const;
@@ -24,8 +25,7 @@ export const noOpStatuses = ['пока остаются, запроса нет']
 export const hiddenStatuses = [
 
 	// temporary
-	'погибшие',
-	'животные',
+	'погибли',
 	
 	// technical
 	'дубль',
@@ -50,6 +50,7 @@ export const statusColors: Record<VisibleStatus, IconColor> = {
 	'медицина, требуются лекарства': 'red',
 	
 	актуально: 'blue',
+	животные: 'pink',
 	
 	'была эвакуация, нет актуальных данных': 'violet',
 	'нет данных об эвакуации': 'violet',
