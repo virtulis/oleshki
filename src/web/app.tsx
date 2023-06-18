@@ -3,13 +3,15 @@ import { Entry, EntryList } from '../entry';
 import { createRoot } from 'react-dom/client';
 import { MapView, MapViewState } from './map';
 import dayjs from 'dayjs';
-import { stringify } from 'csv-stringify/sync';
+import { stringify as csvStringify } from 'csv-stringify/sync';
 import * as Sentry from '@sentry/react';
-import { defaultStatuses, StatusCounts } from '../statuses';
+import { StatusCounts } from '../statuses';
 import { isIn, maybe } from '../util';
 import { languageConfig, t } from './i18n';
 import { AuthForm, AuthState } from './auth.js';
 import { defaltFilterState, FilterConfig, FilterState } from './filters.js';
+import stableStringify from 'json-stable-stringify';
+import L, { LatLngTuple } from 'leaflet';
 
 Sentry.init({
 	dsn: 'https://c8db0755be1f40308040c159a57facf4@o306148.ingest.sentry.io/4505333290631168',
@@ -26,7 +28,7 @@ interface AppState {
 	done?: number;
 	noPos?: number;
 	filter: FilterState;
-	mapState?: MapViewState;
+	mapState: MapViewState;
 	goToCoords?: string;
 	drawer?: 'filters' | 'disclaimer' | 'auth';
 	auth: AuthState;
@@ -39,22 +41,41 @@ export class App extends Component<{}, AppState> {
 	mapView = createRef<MapView>();
 
 	constructor(props: {}) {
+		
 		super(props);
+		
 		const clownMode = location.protocol == 'http:';
 		const language = clownMode ? 'ru' : (typeof localStorage == 'object') && localStorage.language || 'ru';
 		const auth: AuthState = maybe(localStorage.auth, JSON.parse) ?? {};
+		
+		const params = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
+		
+		const mapStr = params?.get('map')?.split(',').map(Number);
+		const ll = mapStr?.slice(0, 2) as LatLngTuple ?? [46.61549, 32.69943];
+		const zoom = mapStr?.[2] ?? 11;
+		const mapState: MapViewState = { center: new L.LatLng(...ll), zoom };
+		
+		const filter = ['statuses', 'lists', 'animals'].some(k => params?.has(k)) ? {
+			statuses: params?.get('statuses')?.split(',') ?? [],
+			lists: params?.get('lists')?.split(',') ?? [],
+			animals: !!params?.get('animals'),
+		} as FilterState : defaltFilterState;
+		
 		this.state = {
 			clownMode,
 			language,
 			auth,
-			filter: defaltFilterState,
+			mapState,
+			filter,
 		};
 		languageConfig.language = language;
+		
 	}
 	
 	render() {
 		const {
 			clownMode,
+			mapState,
 			language,
 			updated,
 			shown,
@@ -72,7 +93,7 @@ export class App extends Component<{}, AppState> {
 		const updTime = updated && dayjs(updated) || null;
 		const setFilter = (filter: AppState['filter']) => {
 			const shown = this.filterEntries(entries!, filter);
-			this.setState({ filter, shown });
+			this.setState({ filter, shown }, this.updateHash);
 		};
 		const filterCount = (
 			(filter?.statuses && Object.values(filter.statuses).filter(b => b).length || 0)
@@ -126,11 +147,12 @@ export class App extends Component<{}, AppState> {
 			</div>
 			<MapView
 				clownMode={!!clownMode}
+				state={mapState}
 				entries={entries}
 				shown={shown}
 				selected={selected}
 				selecting={selecting}
-				onUpdated={mapState => this.setState({ mapState })}
+				onUpdated={mapState => this.setState({ mapState }, this.updateHash)}
 				onSelected={this.selectEntries}
 				toggleSelected={this.toggleSelected}
 				ref={this.mapView}
@@ -222,7 +244,7 @@ export class App extends Component<{}, AppState> {
 	};
 	getSelected() {
 		const { mapState, shown, selected } = this.state;
-		return selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds.contains(e.coords));
+		return selected?.length ? selected : shown?.filter(e => e.coords && mapState?.bounds?.contains(e.coords));
 	}
 	
 	makeCsv = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -246,7 +268,7 @@ export class App extends Component<{}, AppState> {
 			e.details,
 		]);
 		
-		const csv = stringify([header, ...rows]);
+		const csv = csvStringify([header, ...rows]);
 		
 		const blob = new Blob([csv], { type: 'text/csv' });
 		
@@ -336,6 +358,28 @@ export class App extends Component<{}, AppState> {
 	updateAuth = (auth: AuthState) => {
 		this.setState({ auth }, this.reloadEntries);
 		localStorage.auth = JSON.stringify(auth);
+	};
+	
+	updateHash = () => {
+		
+		const { mapState, filter } = this.state;
+		if (!mapState) return;
+		const { center, zoom } = mapState;
+		const { lists, animals, statuses } = filter;
+		
+		const params = new URLSearchParams({
+			map: `${[center.lat, center.lng].map(n => n.toFixed(6)).join(',')},${zoom}`,
+		});
+		
+		if (stableStringify(filter) != stableStringify(defaltFilterState)) {
+			if (statuses.length) params.set('statuses', statuses.join(','));
+			if (lists.length) params.set('lists', lists.join(','));
+			if (animals) params.set('animals', 'on');
+		}
+		const query = params.toString().replace(/%2C/g, ',');
+		
+		history.replaceState(null, '', `#${query}`);
+		
 	};
 	
 }

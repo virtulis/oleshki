@@ -9,6 +9,7 @@ import { t } from './i18n';
 import { maybe } from '../util.js';
 
 interface MapProps {
+	state: MapViewState;
 	entries?: Entry[];
 	shown?: Entry[];
 	clownMode: boolean;
@@ -23,9 +24,13 @@ interface MapState {
 
 }
 export interface MapViewState {
-	bounds: L.LatLngBounds;
+	bounds?: L.LatLngBounds;
 	center: L.LatLng;
 	zoom: number;
+}
+
+export function formatCoords(ll: L.LatLng) {
+	return [ll.lat, ll.lng].map(n => n.toFixed(6)).join(', ');
 }
 
 export class MapView extends Component<MapProps, MapState> {
@@ -55,12 +60,8 @@ export class MapView extends Component<MapProps, MapState> {
 	componentDidMount() {
 	
 		const { clownMode } = this.props;
+		const stateProp = this.props.state;
 		
-		const params = location.hash ? new URLSearchParams(location.hash.slice(1)) : null;
-		const saved = params?.get('map')?.split(',').map(Number);
-		const ll = saved?.slice(0, 2) as LatLngTuple ?? [46.61549, 32.69943];
-		const zoom = saved?.[2] ?? 11;
-	
 		this.map = L.map(this.div.current!, {
 			attributionControl: !clownMode,
 		});
@@ -87,13 +88,13 @@ export class MapView extends Component<MapProps, MapState> {
 			maxar,
 		}).addTo(this.map);
 		
-		const lm = this.locationMarker = new L.Marker(ll, {
+		const lm = this.locationMarker = new L.Marker(stateProp.center, {
 			interactive: true,
 			icon: locationIcon,
 		}); // do not .addTo(this.map);
 		lm.bindPopup('');
 		lm.on('click', () => {
-			lm.setPopupContent(this.formatCoords(lm.getLatLng()));
+			lm.setPopupContent(formatCoords(lm.getLatLng()));
 			lm.openPopup();
 		});
 		
@@ -151,11 +152,11 @@ export class MapView extends Component<MapProps, MapState> {
 			lm
 				.addTo(this.map)
 				.setLatLng(event.latlng)
-				.setPopupContent(this.formatCoords(event.latlng))
+				.setPopupContent(formatCoords(event.latlng))
 				.openPopup();
 		});
 		
-		this.map.setView(ll as L.LatLngTuple, zoom);
+		this.map.setView(stateProp.center, stateProp.zoom);
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
@@ -168,8 +169,6 @@ export class MapView extends Component<MapProps, MapState> {
 		const zoom = this.map.getZoom();
 		
 		this.props.onUpdated({ bounds, center, zoom });
-		const state = `${this.formatCoords(center)},${zoom}`;
-		history.replaceState(null, '', `#map=${state}`);
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
@@ -338,17 +337,13 @@ export class MapView extends Component<MapProps, MapState> {
 		
 	}
 	
-	formatCoords(ll: L.LatLng) {
-		return [ll.lat, ll.lng].map(n => n.toFixed(6)).join(', ');
-	}
-	
 	goToCoords(coords: number[]) {
 		const ll = new L.LatLng(coords[0], coords[1]);
 		this.map.setView(ll, Math.max(this.map.getZoom(), 16), { animate: false });
 		this.locationMarker
 			.addTo(this.map)
 			.setLatLng(ll)
-			.setPopupContent(this.formatCoords(ll))
+			.setPopupContent(formatCoords(ll))
 			.openPopup();
 	}
 	
