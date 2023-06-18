@@ -11,6 +11,7 @@ export const noDataStatuses = [
 	'была эвакуация, нет актуальных данных',
 	'нет данных об эвакуации',
 	'частично в списках эвакуированных',
+	'нет контакта',
 ] as const;
 
 export const baseStatuses = [
@@ -53,6 +54,7 @@ export const statusColors: Record<VisibleStatus, IconColor> = {
 	'была эвакуация, нет актуальных данных': 'violet',
 	'нет данных об эвакуации': 'violet',
 	'частично в списках эвакуированных': 'violet',
+	'нет контакта': 'grey',
 	
 	вывезли: 'green',
 	'пока остаются, запроса нет': 'teal',
