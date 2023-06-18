@@ -3,7 +3,14 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "bash build.sh"
+		"copy-deps": "cp node_modules/core-js-bundle/minified.js dist/core.js",
+		"build-server": "pnpm exec tsc",
+		"build-app": "exec esbuild --bundle src/web/app.tsx --inject:src/web/inject.ts --outdir=dist --sourcemap --minify",
+		"build-worker": "pnpm exec esbuild --bundle src/web/worker.ts --outdir=dist --sourcemap --minify",
+		"build-sass": "pnpm exec sass src/app.scss dist/app.css",
+		"build-legacy": "babel --presets @babel/preset-env dist/app.js  -o dist/legacy.js --source-maps",
+		"build": "(pnpm build-server & pnpm build-app & pnpm build-worker & pnpm build-sass) && wait && pnpm build-legacy",
+		"watch": "(pnpm build-server --watch --preserveWatchOutput & pnpm build-app --watch & pnpm build-worker --watch & pnpm build-sass --watch) && wait"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.21.5",
