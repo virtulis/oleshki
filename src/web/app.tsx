@@ -56,8 +56,8 @@ export class App extends Component<{}, AppState> {
 		const mapState: MapViewState = { center: new L.LatLng(...ll), zoom };
 		
 		const filter = ['statuses', 'lists', 'animals'].some(k => params?.has(k)) ? {
-			statuses: params?.get('statuses')?.split(',') ?? [],
-			lists: params?.get('lists')?.split(',') ?? [],
+			statuses: params?.get('statuses')?.split(';') ?? [],
+			lists: params?.get('lists')?.split(';') ?? [],
 			animals: !!params?.get('animals'),
 		} as FilterState : defaltFilterState;
 		
@@ -333,7 +333,7 @@ export class App extends Component<{}, AppState> {
 		}
 		
 		const coords = str.split(/[,;]/).map(n => Number(n.trim()));
-		if (coords?.length == 2 && coords.every(n => isFinite)) {
+		if (coords?.length == 2 && coords.every(isFinite)) {
 			map.goToCoords(coords);
 			this.setState({ goToCoords: undefined });
 		}
@@ -372,11 +372,11 @@ export class App extends Component<{}, AppState> {
 		});
 		
 		if (stableStringify(filter) != stableStringify(defaltFilterState)) {
-			if (statuses.length) params.set('statuses', statuses.join(','));
-			if (lists.length) params.set('lists', lists.join(','));
+			if (statuses.length) params.set('statuses', statuses.join(';'));
+			if (lists.length) params.set('lists', lists.join(';'));
 			if (animals) params.set('animals', 'on');
 		}
-		const query = params.toString().replace(/%2C/g, ',');
+		const query = params.toString().replace(/%3B/g, ';').replace(/%2C/g, ',');
 		
 		history.replaceState(null, '', `#${query}`);
 		
