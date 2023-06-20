@@ -1,5 +1,5 @@
 import { Component, createRef } from 'react';
-import L, { LatLngExpression, LatLngTuple } from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import { Entry } from '../entry';
 import { renderToString } from 'react-dom/server';
 import 'leaflet.locatecontrol';
@@ -7,6 +7,7 @@ import { IconColor, icons, locationIcon } from './markers';
 import { statusColors, VisibleStatus } from '../statuses';
 import { t } from './i18n';
 import { maybe } from '../util.js';
+import proj4 from 'proj4';
 
 interface MapProps {
 	state: MapViewState;
@@ -78,15 +79,11 @@ export class MapView extends Component<MapProps, MapState> {
 		}).addTo(this.map);
 		L.control.locate({}).addTo(this.map);
 		
-		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
-		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
-
 		this.layerControl = L.control.layers({
 			OSM: osm,
 			Visicom: visicom,
-		}, clownMode ? {} : {
-			maxar,
 		}).addTo(this.map);
+		this.layerControl.expand();
 		
 		const lm = this.locationMarker = new L.Marker(stateProp.center, {
 			interactive: true,
@@ -160,6 +157,8 @@ export class MapView extends Component<MapProps, MapState> {
 		
 		if (this.props.shown) this.updateEntries(this.props);
 		
+		if (!clownMode) this.loadExtraLayers();
+
 	}
 	
 	saveState = () => {
@@ -352,7 +351,57 @@ export class MapView extends Component<MapProps, MapState> {
 		this.map.setView(ll, Math.max(this.map.getZoom(), 16), { animate: false });
 		this.updateEntries(this.props, entry);
 	}
+
+	async loadExtraLayers() {
 	
+		/*
+		const bounds = { n: 46.70577000000003, s: 46.442814000000055, w: 32.47389300000003, e: 32.71770800000007 };
+		const maxar = L.imageOverlay(`/104001008763D300.jpg`, [[bounds.n, bounds.w], [bounds.s, bounds.e]]);
+		if (!clownMode) this.layerControl.addOverlay(maxar, 'Спутник 09.06');
+		 */
+	
+		proj4.defs('EPSG:32636', '+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs');
+		
+		const convertEpsg = (coords: any) => proj4('EPSG:32636', 'WGS84', coords).reverse();
+		
+		for (const { file, name, color, weight, convert } of [
+			{
+				file: 'water_20-06-2023_13-29-41.geojson',
+				name: 'Вода на 09.06',
+				color: '#ee3366',
+				weight: 2,
+				
+			},
+			{
+				file: '17062023_water surface.geojson',
+				name: 'Вода на 17.06',
+				color: '#334cee',
+				weight: 2,
+				convert: convertEpsg,
+			},
+			{
+				file: '25062023_water surface.geojson',
+				name: 'Прогноз на 25.06',
+				color: '#4a9f1d',
+				weight: 2,
+				convert: convertEpsg,
+			},
+		]) {
+			
+			const data = await this.props.fetchData(`/geojson/${file}`).then(res => res.json());
+			const layer = L.geoJSON(data, {
+				style: {
+					color,
+					weight,
+				},
+				coordsToLatLng: convert,
+			});
+			this.layerControl.addOverlay(layer, name);
+		
+		}
+
+	}
+
 }
 
 export function EntryPopup({ entry, clownMode, noId }: { entry: Entry; clownMode?: boolean; noId?: boolean }) {
