@@ -362,7 +362,9 @@ export class MapView extends Component<MapProps, MapState> {
 	
 		proj4.defs('EPSG:32636', '+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs');
 		
-		const convertEpsg = (coords: any) => proj4('EPSG:32636', 'WGS84', coords).reverse();
+		const convertEpsg = (coords: any) => new L.LatLng(
+			...proj4('EPSG:32636', 'WGS84', [coords[0], coords[1]]).reverse() as [number, number]
+		);
 		
 		for (const { file, name, color, weight, convert } of [
 			{
@@ -370,7 +372,6 @@ export class MapView extends Component<MapProps, MapState> {
 				name: 'Вода на 09.06',
 				color: '#ee3366',
 				weight: 2,
-				
 			},
 			{
 				file: '17062023_water surface.geojson',
@@ -380,23 +381,41 @@ export class MapView extends Component<MapProps, MapState> {
 				convert: convertEpsg,
 			},
 			{
+				file: '18JUN2023_new.geojson',
+				name: 'Прогноз на 18.06',
+				color: '#3384ee',
+				weight: 2,
+				convert: convertEpsg,
+			},
+			{
 				file: '25062023_water surface.geojson',
 				name: 'Прогноз на 25.06',
-				color: '#4a9f1d',
+				color: '#1d9f7c',
+				weight: 2,
+				convert: convertEpsg,
+			},
+			{
+				file: '30JUN2023_new.geojson',
+				name: 'Прогноз на 30.06',
+				color: '#1d9f55',
 				weight: 2,
 				convert: convertEpsg,
 			},
 		]) {
 			
-			const data = await this.props.fetchData(`/geojson/${file}`).then(res => res.json());
-			const layer = L.geoJSON(data, {
-				style: {
-					color,
-					weight,
-				},
-				coordsToLatLng: convert,
+			const group = new L.LayerGroup();
+			group.once('add', async () => {
+				const data = await this.props.fetchData(`/geojson/${file}`).then(res => res.json());
+				const layer = L.geoJSON(data, {
+					style: {
+						color,
+						weight,
+					},
+					coordsToLatLng: convert,
+				});
+				group.addLayer(layer);
 			});
-			this.layerControl.addOverlay(layer, name);
+			this.layerControl.addOverlay(group, name);
 		
 		}
 
