@@ -8,6 +8,7 @@ import { statusColors, VisibleStatus } from '../statuses';
 import { t } from './i18n';
 import { maybe } from '../util.js';
 import proj4 from 'proj4';
+import { Feature, FeatureCollection, GeoJsonObject } from 'geojson';
 
 interface MapProps {
 	state: MapViewState;
@@ -401,23 +402,50 @@ export class MapView extends Component<MapProps, MapState> {
 				weight: 2,
 				convert: convertEpsg,
 			},
+			{
+				file: '17062023_depth.geojson',
+				name: '17062023_depth.geojson',
+				color: '#9f6b1d',
+				weight: 1,
+				convert: convertEpsg,
+			},
 		]) {
 			
 			const group = new L.LayerGroup();
 			group.once('add', async () => {
-				const data = await this.props.fetchData(`/geojson/${file}`).then(res => res.json());
+				const data: FeatureCollection = await this.props.fetchData(`/geojson/${file}`).then(res => res.json());
+				// if (file == '17062023_depth.geojson') {
+				// 	for (const feat of data.features) {
+				// 		const v = Number(feat.properties?.value || 0) / 6;
+				// 		feat.properties!.style = ;
+				// 	}
+				// }
+				const isDepth = file == '17062023_depth.geojson';
 				const layer = L.geoJSON(data, {
-					style: {
-						color,
-						weight,
-					},
+					style: isDepth
+						? (feat?: Feature) => {
+							const v = Math.min(1, Number(feat?.properties?.VALUE || 0) / 4);
+							return {
+								color: `rgba(${192 * v}, ${Math.round(192 - 192 * v)}, ${0})`,
+								weight,
+								fillOpacity: 0.5,
+								opacity: 0.5,
+							};
+						}
+						: {
+							color,
+							weight,
+						},
 					coordsToLatLng: convert,
+					onEachFeature: isDepth ? (feat, layer) => layer.bindPopup(String(feat.properties?.VALUE)) : undefined,
 				});
 				group.addLayer(layer);
 			});
 			this.layerControl.addOverlay(group, name);
 		
 		}
+		
+		
 
 	}
 
