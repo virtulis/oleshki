@@ -7,6 +7,8 @@ export interface Config {
     spreadsheetId: string;
 	sheetId: number;
     sheetRange: string;
+    airtableKey: string;
+    airtableBase: string;
 }
 
 export const config: Config = JSON.parse(await readFile('config.json', 'utf8'));
