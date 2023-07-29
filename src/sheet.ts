@@ -25,7 +25,14 @@ auth.setCredentials(config.googleOAuthToken);
 const sh = sheets({ version: 'v4', auth });
 
 export async function fetchSheet() {
-
+	
+	if (dayjs(config.googleOAuthToken.expiry_date).isBefore(dayjs().add(6, 'hours'))) {
+		const res = await auth.refreshAccessToken();
+		console.log(res);
+		await writeFile('config.json', JSON.stringify({ ...config, googleOAuthToken: res.credentials }, null, '\t'));
+		auth.setCredentials(res.credentials);
+	}
+	
 	const doc = await sh.spreadsheets.get({
 		spreadsheetId: config.spreadsheetId,
 		includeGridData: true,
@@ -354,7 +361,7 @@ async function printDiff() {
 
 if (process.argv.includes('fetch')) {
 	const data = await fetchSheet();
-	await parseSheet(data);
+	if (data) await parseSheet(data);
 }
 
 if (process.argv.includes('cleanup')) {
